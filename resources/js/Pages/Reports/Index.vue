@@ -173,31 +173,31 @@ const exportCsv = () => {
       </div>
 
       <!-- Filters Panel -->
-      <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm p-5 space-y-4">
+      <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm p-4 space-y-4">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div class="flex flex-wrap gap-2 items-center">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Preset:</span>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">Preset:</span>
             <button 
               @click="setPresetRange('today')"
-              class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
             >
               Hari Ini
             </button>
             <button 
               @click="setPresetRange('yesterday')"
-              class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
             >
               Kemarin
             </button>
             <button 
               @click="setPresetRange('this_month')"
-              class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
             >
               Bulan Ini
             </button>
             <button 
               @click="setPresetRange('last_30_days')"
-              class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
             >
               30 Hari Terakhir
             </button>
@@ -206,25 +206,25 @@ const exportCsv = () => {
           <div class="flex items-center gap-3 w-full md:w-auto">
             <div class="grid grid-cols-2 gap-2 grow md:grow-0">
               <div>
-                <label class="block text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Dari</label>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Dari</label>
                 <input 
                   v-model="date_from"
                   type="date"
-                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
               <div>
-                <label class="block text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Sampai</label>
+                <label class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Sampai</label>
                 <input 
                   v-model="date_to"
                   type="date"
-                  class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
             </div>
             <button 
               @click="applyFilters"
-              class="self-end px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-850 text-white text-xs font-bold rounded-xl transition duration-200 shadow-md shadow-indigo-600/10"
+              class="self-end px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-850 text-white text-xs font-bold rounded-lg transition duration-200 shadow-md shadow-indigo-600/10"
             >
               Filter
             </button>
