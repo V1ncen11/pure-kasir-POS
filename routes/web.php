@@ -10,6 +10,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root ke dashboard
@@ -34,6 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/kasir', [KasirController::class, 'index'])->name('kasir.index');
         Route::post('/kasir/transaksi', [KasirController::class, 'store'])->name('kasir.store');
         Route::get('/kasir/produk/cari', [KasirController::class, 'searchProduct'])->name('kasir.product.search');
+        Route::get('/kasir/pelanggan/cari', [KasirController::class, 'searchCustomer'])->name('kasir.customer.search');
+        Route::post('/kasir/pelanggan/tambah', [KasirController::class, 'storeCustomer'])->name('kasir.customer.store');
     });
 
     // Transaksi history (semua role, tapi kasir hanya lihat hari ini)
@@ -87,6 +90,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'update'  => 'users.update',
             'destroy' => 'users.destroy',
         ])->parameters(['pengguna' => 'user']);
+
+        // Pelanggan CRUD
+        Route::resource('pelanggan', CustomerController::class)->names([
+            'index'   => 'customers.index',
+            'create'  => 'customers.create',
+            'store'   => 'customers.store',
+            'show'    => 'customers.show',
+            'edit'    => 'customers.edit',
+            'update'  => 'customers.update',
+            'destroy' => 'customers.destroy',
+        ])->parameters(['pelanggan' => 'customer']);
 
         // Suppliers
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->except(['create', 'show', 'edit']);

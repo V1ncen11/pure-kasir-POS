@@ -401,7 +401,7 @@ const performDelete = () => {
                 @click="form.is_active = !form.is_active"
                 class="text-indigo-600 dark:text-indigo-400 focus:outline-none transition duration-150"
               >
-                <ToggleRight v-if="form.is_active" class="w-10 h-10 text-indigo-650" />
+                <ToggleRight v-if="form.is_active" class="w-10 h-10 text-indigo-600" />
                 <ToggleLeft v-else class="w-10 h-10 text-slate-450" />
               </button>
             </div>
@@ -419,7 +419,7 @@ const performDelete = () => {
               <button 
                 type="submit"
                 :disabled="form.processing"
-                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-md shadow-indigo-650/10"
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-md shadow-indigo-600/10"
               >
                 {{ form.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
               </button>

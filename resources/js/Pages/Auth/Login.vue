@@ -25,7 +25,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Sign In - Toko ESSA NURA" />
+    <Head title="Masuk - Toko Amir Udin" />
 
     <div class="min-h-screen w-full flex bg-[#f1f6fb] text-slate-800 overflow-x-hidden font-sans">
         
@@ -52,10 +52,10 @@ const submit = () => {
                 <div>
                     <h1 class="text-lg font-extrabold tracking-tight leading-tight">
                         <span class="text-white">Toko</span>
-                        <span class="text-sky-300 ml-1.5">ESSA</span>
-                        <span class="text-cyan-400 ml-1.5">NURA</span>
+                        <span class="text-sky-300 ml-1.5">Amir</span>
+                        <span class="text-cyan-400 ml-1.5">Udin</span>
                     </h1>
-                    <p class="text-[10px] font-semibold text-blue-200 tracking-widest uppercase leading-none">Enterprise Registry</p>
+                    <p class="text-[10px] font-semibold text-blue-200 tracking-widest uppercase leading-none">Aplikasi Kasir Pintar</p>
                 </div>
             </div>
 
@@ -63,28 +63,32 @@ const submit = () => {
             <div class="z-10 mt-auto max-w-lg">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/10 backdrop-blur-md border border-white/10 text-white mb-4">
                     <span class="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                    Terminal Node Active
+                    Sistem Kasir Aktif
                 </span>
                 <h2 class="text-3xl font-bold text-white tracking-tight leading-tight">
-                    Powering modern retail, dining, and boutique operations.
+                    Mendukung operasional ritel, kuliner, dan butik modern.
                 </h2>
                 <p class="mt-2.5 text-blue-100 text-sm leading-relaxed">
-                    Streamline transactions, track inventory, and view retail analytics in a beautifully unified terminal system.
+                    Catat penjualan, pantau stok barang, dan lihat laporan keuangan dalam satu aplikasi kasir terintegrasi.
                 </p>
                 
                 <div class="mt-8 flex items-center space-x-4 text-xs text-blue-300/80 border-t border-white/10 pt-4">
                     <span>&copy; 2026 Kasir POS.</span>
                     <span>&bull;</span>
-                    <span>Secure Terminal Protocol.</span>
+                    <span>Sistem Aman & Terenkripsi.</span>
                 </div>
             </div>
         </div>
 
         <!-- Right Side: Luxury Minimalist Form -->
-        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 md:p-16 bg-[#f1f6fb] relative">
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 md:p-16 bg-[#f1f6fb] relative overflow-hidden">
             
+            <!-- Decorative background blobs -->
+            <div class="absolute -top-12 -right-12 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -left-12 w-96 h-96 bg-sky-300/20 rounded-full blur-3xl pointer-events-none"></div>
+
             <!-- Mobile Brand Header (Visible only on lg:hidden) -->
-            <div class="absolute top-6 left-6 flex items-center space-x-2.5 lg:hidden">
+            <div class="absolute top-6 left-6 flex items-center space-x-2.5 lg:hidden z-10">
                 <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 p-2 shadow-sm">
                     <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
@@ -94,15 +98,15 @@ const submit = () => {
             </div>
 
             <!-- Login Card -->
-            <div class="w-full max-w-md bg-white/95 backdrop-blur-md border border-blue-100 rounded-2xl p-8 sm:p-10 shadow-2xl shadow-blue-500/5 transition-all duration-300">
+            <div class="w-full max-w-md bg-white/90 backdrop-blur-lg border border-blue-100/80 rounded-2xl p-8 sm:p-10 shadow-2xl shadow-blue-500/10 transition-all duration-300 z-10 hover:shadow-blue-500/15">
                 
                 <!-- Form Header -->
                 <div class="text-left">
                     <h2 class="text-2xl sm:text-3xl font-bold text-blue-950 tracking-tight">
-                        Sign In
+                        Masuk
                     </h2>
                     <p class="text-slate-500 text-sm mt-2 leading-relaxed">
-                        Enter your credentials to access the register terminal.
+                        Masukkan kredensial Anda untuk mengakses terminal kasir.
                     </p>
                 </div>
 
@@ -117,7 +121,7 @@ const submit = () => {
                     <!-- Email field -->
                     <div class="space-y-1.5">
                         <label for="email" class="text-[11px] font-bold text-blue-900/70 tracking-wider uppercase block">
-                            Email Address
+                            Alamat Email
                         </label>
                         <div class="relative group">
                             <!-- Input Icon -->
@@ -132,7 +136,7 @@ const submit = () => {
                                 type="email"
                                 v-model="form.email"
                                 class="w-full bg-blue-50/30 border border-blue-100/80 text-slate-900 rounded-xl py-3 pl-11 pr-4 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-sm hover:border-blue-200"
-                                placeholder="name@store.com"
+                                placeholder="nama@toko.com"
                                 required
                                 autofocus
                                 autocomplete="username"
@@ -147,7 +151,7 @@ const submit = () => {
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
                             <label for="password" class="text-[11px] font-bold text-blue-900/70 tracking-wider uppercase block">
-                                Password
+                                Kata Sandi
                             </label>
                         </div>
                         <div class="relative group">
@@ -190,7 +194,7 @@ const submit = () => {
                                 </div>
                             </div>
                             <span class="ms-2 text-xs text-slate-500 hover:text-slate-800 font-medium transition-colors">
-                                Remember me
+                                Ingat saya
                             </span>
                         </label>
 
@@ -199,7 +203,7 @@ const submit = () => {
                             :href="route('password.request')"
                             class="text-xs text-blue-600 hover:text-blue-800 transition-colors font-semibold"
                         >
-                            Forgot password?
+                            Lupa kata sandi?
                         </Link>
                     </div>
 
@@ -207,7 +211,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="w-full bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-700 hover:to-sky-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 active:scale-[0.99] flex items-center justify-center space-x-2 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed group/btn"
+                        class="w-full bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-700 hover:to-sky-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed group/btn"
                     >
                         <!-- Spinner Icon (Visible when loading) -->
                         <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -216,13 +220,13 @@ const submit = () => {
                         </svg>
                         
                         <span v-if="!form.processing" class="flex items-center justify-center space-x-2">
-                            <span>Sign In</span>
+                            <span>Masuk</span>
                             <svg class="h-3.5 w-3.5 transform group-hover/btn:translate-x-0.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                                 <polyline points="12 5 19 12 12 19"></polyline>
                             </svg>
                         </span>
-                        <span v-else>Processing...</span>
+                        <span v-else>Memproses...</span>
                     </button>
 
                 </form>

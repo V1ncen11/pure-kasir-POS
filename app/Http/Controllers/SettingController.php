@@ -30,6 +30,7 @@ class SettingController extends Controller
             'receipt_header' => 'nullable|string|max:200',
             'receipt_footer' => 'nullable|string|max:200',
             'low_stock_alert'=> 'boolean',
+            'receipt_paper_width' => 'required|string|in:58mm,80mm',
         ]);
 
         foreach ($data as $key => $value) {

@@ -21,6 +21,7 @@ class SettingSeeder extends Seeder
             'currency_symbol'  => 'Rp',
             'currency_locale'  => 'id-ID',
             'low_stock_alert'  => '1',
+            'receipt_paper_width' => '58mm',
         ];
 
         foreach ($defaults as $key => $value) {

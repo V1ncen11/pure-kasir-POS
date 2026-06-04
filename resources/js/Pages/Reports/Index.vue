@@ -232,91 +232,91 @@ const exportCsv = () => {
         </div>
       </div>
 
-      <!-- Financial & Operational Widget Cards (Unified 6-Column Grid) -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <!-- Financial & Operational Widget Cards (Unified Responsive Grid) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6 gap-4">
         <!-- Revenue Card -->
-        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-2xl p-3.5 shadow-md shadow-indigo-650/15 flex items-center justify-between">
-          <div class="space-y-1 min-w-0">
-            <span class="block text-[10px] font-bold tracking-wider text-indigo-100 uppercase truncate">Total Omset</span>
-            <h3 class="text-base font-extrabold tracking-tight truncate">{{ formatRupiah(summary.total_revenue) }}</h3>
-            <p class="text-[10px] text-indigo-100/80 flex items-center gap-1 font-semibold truncate">
-              <TrendingUp class="w-3 h-3 shrink-0" />
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+          <div class="space-y-1 min-w-0 pr-7">
+            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Total Omset</span>
+            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.total_revenue) }}</h3>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
+              <TrendingUp class="w-3 h-3 shrink-0 text-indigo-500 dark:text-indigo-400" />
               <span>Omset Kotor</span>
             </p>
           </div>
-          <div class="p-1.5 bg-white/10 rounded-lg shrink-0 ml-1">
-            <Banknote class="w-4 h-4 text-white" />
+          <div class="p-1.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0 ml-1">
+            <Banknote class="w-4 h-4" />
           </div>
         </div>
 
         <!-- Expense Card -->
-        <div class="bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-2xl p-3.5 shadow-md shadow-slate-600/10 flex items-center justify-between">
-          <div class="space-y-1 min-w-0">
-            <span class="block text-[10px] font-bold tracking-wider text-slate-200 uppercase truncate">Pengeluaran</span>
-            <h3 class="text-base font-extrabold tracking-tight truncate">{{ formatRupiah(summary.total_expense) }}</h3>
-            <p class="text-[10px] text-slate-200/80 flex items-center gap-1 font-semibold truncate">
-              <FileDown class="w-3 h-3 shrink-0" />
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+          <div class="space-y-1 min-w-0 pr-7">
+            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Pengeluaran</span>
+            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.total_expense) }}</h3>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
+              <FileDown class="w-3 h-3 shrink-0 text-slate-500 dark:text-slate-400" />
               <span>Belanja Stok</span>
             </p>
           </div>
-          <div class="p-1.5 bg-white/10 rounded-lg shrink-0 ml-1">
-            <ShoppingBag class="w-4 h-4 text-white" />
+          <div class="p-1.5 bg-slate-100 dark:bg-slate-900/50 rounded-lg text-slate-600 dark:text-slate-400 shrink-0 ml-1">
+            <ShoppingBag class="w-4 h-4" />
           </div>
         </div>
 
         <!-- Profit Card -->
-        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl p-3.5 shadow-md shadow-emerald-650/15 flex items-center justify-between">
-          <div class="space-y-1 min-w-0">
-            <span class="block text-[10px] font-bold tracking-wider text-emerald-100 uppercase truncate">Keuntungan</span>
-            <h3 class="text-base font-extrabold tracking-tight truncate">{{ formatRupiah(summary.net_profit) }}</h3>
-            <p class="text-[10px] text-emerald-100/80 flex items-center gap-1 font-semibold truncate">
-              <ArrowUpRight class="w-3 h-3 shrink-0" />
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+          <div class="space-y-1 min-w-0 pr-7">
+            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Keuntungan</span>
+            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.net_profit) }}</h3>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
+              <ArrowUpRight class="w-3 h-3 shrink-0 text-emerald-500 dark:text-emerald-400" />
               <span>Net Profit</span>
             </p>
           </div>
-          <div class="p-1.5 bg-white/10 rounded-lg shrink-0 ml-1">
-            <TrendingUp class="w-4 h-4 text-white" />
+          <div class="p-1.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
+            <TrendingUp class="w-4 h-4" />
           </div>
         </div>
 
         <!-- Transactions Card -->
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
-          <div class="space-y-1 min-w-0">
+          <div class="space-y-1 min-w-0 pr-7">
             <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Transaksi</span>
-            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ summary.total_transactions }}</h3>
-            <p class="text-[10px] text-slate-400 dark:text-slate-550 flex items-center gap-1 font-semibold truncate">
+            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ summary.total_transactions }}</h3>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
               <span>Sukses</span>
             </p>
           </div>
-          <div class="p-1.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0 ml-1">
+          <div class="p-1.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
             <ShoppingBag class="w-4 h-4" />
           </div>
         </div>
 
         <!-- Avg Value Card -->
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
-          <div class="space-y-1 min-w-0">
+          <div class="space-y-1 min-w-0 pr-7">
             <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Rata-rata</span>
-            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ formatRupiah(summary.avg_transaction) }}</h3>
-            <p class="text-[10px] text-slate-400 dark:text-slate-550 flex items-center gap-1 font-semibold truncate">
+            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.avg_transaction) }}</h3>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
               <span>Nilai struk</span>
             </p>
           </div>
-          <div class="p-1.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0 ml-1">
+          <div class="p-1.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-blue-600 dark:text-blue-400 shrink-0 ml-1">
             <ArrowUpRight class="w-4 h-4" />
           </div>
         </div>
 
         <!-- Discounts Card -->
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
-          <div class="space-y-1 min-w-0">
+          <div class="space-y-1 min-w-0 pr-7">
             <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Diskon</span>
-            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ formatRupiah(summary.total_discount) }}</h3>
+            <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.total_discount) }}</h3>
             <p class="text-[10px] text-rose-500 flex items-center gap-1 font-semibold truncate">
               <span>Potongan</span>
             </p>
           </div>
-          <div class="p-1.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0 ml-1">
+          <div class="p-1.5 bg-rose-50 dark:bg-rose-950/30 rounded-lg text-rose-600 dark:text-rose-400 shrink-0 ml-1">
             <Percent class="w-4 h-4" />
           </div>
         </div>

@@ -51,13 +51,19 @@ class TransactionController extends Controller
 
     public function show(Transaction $transaction): Response
     {
-        $transaction->load(['cashier:id,name', 'items.product:id,name,sku']);
+        $transaction->load(['cashier:id,name', 'items.product:id,name,sku', 'customer']);
 
         return Inertia::render('Transactions/Show', [
             'transaction' => [
                 'id'             => $transaction->id,
                 'invoice_number' => $transaction->invoice_number,
                 'cashier_name'   => $transaction->cashier->name,
+                'customer'       => $transaction->customer ? [
+                    'id'     => $transaction->customer->id,
+                    'name'   => $transaction->customer->name,
+                    'phone'  => $transaction->customer->phone,
+                    'points' => $transaction->customer->points,
+                ] : null,
                 'subtotal'       => $transaction->subtotal,
                 'discount'       => $transaction->discount,
                 'tax'            => $transaction->tax,

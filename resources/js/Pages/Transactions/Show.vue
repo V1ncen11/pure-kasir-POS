@@ -10,7 +10,8 @@ const props = defineProps({
 })
 
 const toast = useToast()
-const { app_name = 'KASIR POS' } = usePage().props.settings || {}
+const settings = usePage().props.settings || {}
+const { app_name = 'KASIR POS' } = settings
 
 const formatRupiah = (value) => {
   return new Intl.NumberFormat('id-ID', {
@@ -28,7 +29,7 @@ const printReceipt = () => {
 
 <template>
   <AppLayout title="Detail Transaksi">
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="max-w-4xl mx-auto space-y-6 screen-only-invoice">
       
       <!-- Action Bar -->
       <div class="flex items-center justify-between no-print">
@@ -86,6 +87,15 @@ const printReceipt = () => {
                 <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Kasir Pelaksana</span>
                 <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ transaction.cashier_name }}</p>
               </div>
+            </div>
+
+            <!-- Customer / Member Info -->
+            <div v-if="transaction.customer" class="pt-4 border-t border-slate-100 dark:border-slate-700/50">
+              <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Pelanggan / Member</span>
+              <p class="text-sm font-extrabold text-slate-900 dark:text-white">
+                {{ transaction.customer.name }} 
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold ml-1.5">({{ transaction.customer.phone || 'Tanpa No. HP' }})</span>
+              </p>
             </div>
           </div>
 
@@ -197,48 +207,133 @@ const printReceipt = () => {
 
       </div>
     </div>
+
+    <!-- Thermal Print Layout (Hidden on Screen, visible only when printing) -->
+    <div :class="['print-only-receipt', settings?.receipt_paper_width === '80mm' ? 'receipt-80mm' : 'receipt-58mm']">
+      <div class="receipt">
+        <div class="receipt__header">
+          <h2>{{ settings?.store_name ?? 'Toko' }}</h2>
+          <p>{{ settings?.store_address }}</p>
+          <p>{{ settings?.store_phone }}</p>
+        </div>
+        <div class="receipt__divider">--------------------------------</div>
+        <div class="receipt__meta">
+          <div class="receipt__meta-row">
+            <span>Invoice</span><span>{{ transaction.invoice_number }}</span>
+          </div>
+          <div class="receipt__meta-row">
+            <span>Waktu</span><span>{{ transaction.created_at }}</span>
+          </div>
+          <div class="receipt__meta-row">
+            <span>Metode</span><span class="capitalize">{{ transaction.payment_method === 'cash' ? 'Tunai' : transaction.payment_method }}</span>
+          </div>
+          <div v-if="transaction.customer" class="receipt__meta-row">
+            <span>Member</span><span>{{ transaction.customer.name }}</span>
+          </div>
+          <div v-if="transaction.customer" class="receipt__meta-row">
+            <span>Poin Baru</span><span>+{{ Math.floor(transaction.total / 10000) }} Poin</span>
+          </div>
+        </div>
+        <div class="receipt__divider">--------------------------------</div>
+        <div class="receipt__items">
+          <div v-for="item in transaction.items" :key="item.id" class="receipt__item">
+            <div class="receipt__item-name">{{ item.product_name }}</div>
+            <div class="receipt__item-row">
+              <span>{{ item.qty }} x {{ formatRupiah(item.price) }}</span>
+              <span>{{ formatRupiah(item.subtotal) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="receipt__divider">--------------------------------</div>
+        <div class="receipt__totals">
+          <div class="receipt__total-row"><span>Subtotal</span><span>{{ formatRupiah(transaction.subtotal) }}</span></div>
+          <div v-if="transaction.discount > 0" class="receipt__total-row"><span>Diskon</span><span>- {{ formatRupiah(transaction.discount) }}</span></div>
+          <div v-if="transaction.tax > 0" class="receipt__total-row"><span>Pajak ({{ transaction.tax_percentage || 0 }}%)</span><span>{{ formatRupiah(transaction.tax) }}</span></div>
+          <div class="receipt__total-row receipt__total-row--bold"><span>TOTAL</span><span>{{ formatRupiah(transaction.total) }}</span></div>
+          <div class="receipt__total-row"><span>Bayar</span><span>{{ formatRupiah(transaction.paid_amount) }}</span></div>
+          <div class="receipt__total-row receipt__total-row--change"><span>Kembali</span><span>{{ formatRupiah(transaction.change_amount) }}</span></div>
+        </div>
+        <div class="receipt__divider">--------------------------------</div>
+        <div class="receipt__footer">
+          <p>{{ settings?.receipt_header ?? 'Terima kasih!' }}</p>
+          <p class="text-xs">{{ settings?.receipt_footer }}</p>
+        </div>
+      </div>
+    </div>
   </AppLayout>
 </template>
 
 <style>
+.print-only-receipt {
+  display: none;
+}
+
 @media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
   body {
     background-color: white !important;
     color: black !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .print-header {
-    display: block !important;
-  }
-  .print-footer {
-    display: block !important;
-  }
-  aside, nav, header {
-    display: none !important;
-  }
-  main {
     margin: 0 !important;
     padding: 0 !important;
-    width: 100% !important;
   }
-  .max-w-4xl {
-    max-width: 100% !important;
-    width: 100% !important;
+  .no-print, aside, nav, header, .sidebar, .navbar, .screen-only-invoice {
+    display: none !important;
   }
-  .bg-white, .dark\:bg-slate-800 {
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+  .app-shell, .main-content, .page-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    display: block !important;
+    background: transparent !important;
+  }
+  .print-only-receipt {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
     padding: 0 !important;
   }
-  table th {
-    color: #000 !important;
-    border-bottom: 2px solid #000 !important;
+  .receipt {
+    font-family: 'Courier New', Courier, monospace !important;
+    padding: 2mm 3mm !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+    line-height: 1.4 !important;
   }
-  table td {
-    border-bottom: 1px solid #ddd !important;
+  .receipt-58mm {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
   }
+  .receipt-80mm {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+  .receipt__header { text-align: center; margin-bottom: 8px; }
+  .receipt__header h2 { font-size: 1.15em; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; }
+  .receipt__header p { font-size: 0.9em; color: #000; margin: 2px 0; }
+  .receipt__divider { color: #000; margin: 8px 0; font-size: 0.9em; text-align: center; letter-spacing: -1px; }
+  .receipt__meta-row, .receipt__total-row {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: 0.95em; margin: 3px 0;
+  }
+  .receipt__item { margin-bottom: 6px; page-break-inside: avoid; }
+  .receipt__item-name { font-weight: 600; font-size: 0.95em; }
+  .receipt__item-row {
+    display: flex; justify-content: space-between;
+    font-size: 0.9em; color: #000;
+  }
+  .receipt__total-row--bold { font-weight: 700; font-size: 1.05em; border-top: 1px dashed #000; padding-top: 3px; }
+  .receipt__total-row--change { font-weight: 700; }
+  .receipt__footer { text-align: center; margin-top: 12px; color: #000; font-size: 0.9em; page-break-inside: avoid; }
+  .receipt__footer p { margin: 2px 0; }
 }
 </style>

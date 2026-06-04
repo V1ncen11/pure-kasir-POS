@@ -12,7 +12,7 @@ class Transaction extends Model
     use HasFactory;
 
     protected $fillable = [
-        'invoice_number', 'cashier_id', 'subtotal', 'discount',
+        'invoice_number', 'cashier_id', 'customer_id', 'subtotal', 'discount',
         'tax', 'total', 'paid_amount', 'change_amount',
         'payment_method', 'status', 'notes',
     ];
@@ -29,6 +29,11 @@ class Transaction extends Model
     public function cashier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function items(): HasMany

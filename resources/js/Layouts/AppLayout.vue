@@ -110,6 +110,12 @@ const navItems = computed(() => {
       roles: ['admin'],
     },
     {
+      label: 'Pelanggan',
+      icon: Users,
+      route: 'customers.index',
+      roles: ['admin'],
+    },
+    {
       label: 'Laporan',
       icon: BarChart3,
       route: 'reports.index',
@@ -210,7 +216,7 @@ function isActive(routeName) {
             <User :size="18" />
           </div>
           <Transition name="fade-slide">
-            <div v-if="sidebarOpen" class="sidebar__user-info">
+            <div v-if="sidebarOpen || mobileOpen" class="sidebar__user-info">
               <span class="sidebar__user-name">{{ user?.name }}</span>
               <div class="sidebar__user-status">
                 <span class="status-dot"></span>
@@ -220,7 +226,7 @@ function isActive(routeName) {
           </Transition>
         </div>
         <button
-          v-if="sidebarOpen"
+          v-if="sidebarOpen || mobileOpen"
           class="sidebar__logout"
           title="Logout"
           @click="showLogoutModal = true"
@@ -266,6 +272,15 @@ function isActive(routeName) {
               <span class="navbar__user-role">{{ user?.role === 'admin' ? 'Admin' : 'Kasir' }}</span>
             </div>
           </div>
+
+          <!-- Logout Button (Top Navbar) -->
+          <button
+            class="navbar__logout-btn"
+            title="Logout"
+            @click="showLogoutModal = true"
+          >
+            <LogOut :size="18" />
+          </button>
         </div>
       </header>
 
@@ -322,7 +337,7 @@ function isActive(routeName) {
 /* ── Sidebar ── */
 .sidebar {
   width: 260px;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #f4f8fd; /* Soft light blue pastel background */
   display: flex;
   flex-direction: column;
@@ -420,6 +435,12 @@ function isActive(routeName) {
 }
 .sidebar__toggle svg { transition: transform 0.25s ease; }
 .rotate-180 { transform: rotate(180deg); }
+
+@media (max-width: 768px) {
+  .sidebar__toggle {
+    display: none !important;
+  }
+}
 
 /* Nav */
 .sidebar__nav {
@@ -664,6 +685,33 @@ function isActive(routeName) {
 }
 
 .navbar__right { display: flex; align-items: center; gap: 12px; }
+
+/* ── Navbar Logout Button ── */
+.navbar__logout-btn {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.navbar__logout-btn:hover {
+  background: #fca5a5;
+  color: #b91c1c;
+}
+@media (max-width: 768px) {
+  .navbar__logout-btn {
+    display: flex;
+  }
+}
+.main-content--expanded .navbar__logout-btn {
+  display: flex;
+}
 
 .navbar__alert-btn {
   position: relative;

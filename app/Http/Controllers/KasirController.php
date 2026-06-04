@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\StockLog;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -52,6 +53,7 @@ class KasirController extends Controller
             'paid_amount'    => 'required|numeric|min:0',
             'payment_method' => 'required|in:cash,transfer,qris',
             'notes'          => 'nullable|string|max:500',
+            'customer_id'    => 'nullable|exists:customers,id',
         ]);
         // Backend verification for product activity status and stock sufficiency
         foreach ($data['items'] as $item) {
@@ -79,6 +81,7 @@ class KasirController extends Controller
             $transaction = Transaction::create([
                 'invoice_number' => Transaction::generateInvoiceNumber(),
                 'cashier_id'     => auth()->id(),
+                'customer_id'    => $data['customer_id'] ?? null,
                 'subtotal'       => $subtotal,
                 'discount'       => $discount,
                 'tax'            => $tax,
@@ -89,6 +92,14 @@ class KasirController extends Controller
                 'notes'          => $data['notes'] ?? null,
                 'status'         => 'completed',
             ]);
+
+            // Tambahkan poin jika ada pelanggan
+            if ($transaction->customer_id) {
+                $pointsEarned = floor($transaction->total / 10000);
+                if ($pointsEarned > 0) {
+                    $transaction->customer->increment('points', $pointsEarned);
+                }
+            }
 
             foreach ($data['items'] as $item) {
                 $product = Product::find($item['product_id']);
@@ -128,5 +139,39 @@ class KasirController extends Controller
         ActivityLog::log('Transaksi Penjualan', 'Transaksi kasir berhasil diproses.');
 
         return back()->with('success', 'Transaksi berhasil disimpan.');
+    }
+
+    public function searchCustomer(Request $request): JsonResponse
+    {
+        $keyword = $request->get('q', '');
+
+        $customers = Customer::where('name', 'like', "%{$keyword}%")
+            ->orWhere('phone', 'like', "%{$keyword}%")
+            ->take(15)
+            ->get(['id', 'name', 'phone', 'points']);
+
+        return response()->json($customers);
+    }
+
+    public function storeCustomer(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name'    => 'required|string|max:255',
+            'phone'   => 'nullable|string|max:20|unique:customers,phone',
+            'address' => 'nullable|string|max:500',
+        ]);
+
+        $customer = Customer::create([
+            'name'    => $data['name'],
+            'phone'   => $data['phone'] ?? null,
+            'address' => $data['address'] ?? null,
+            'points'  => 0,
+        ]);
+
+        return response()->json([
+            'success'  => true,
+            'message'  => 'Member baru berhasil ditambahkan.',
+            'customer' => $customer,
+        ]);
     }
 }

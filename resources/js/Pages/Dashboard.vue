@@ -259,20 +259,26 @@ export default { components: { apexchart: VueApexCharts } }
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
 }
 
 .stat-card {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
   border: 1px solid #f1f5f9;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+@media (min-width: 640px) {
+  .stat-card {
+    padding: 20px;
+    gap: 16px;
+  }
 }
 .stat-card:hover {
   transform: translateY(-2px);
@@ -295,8 +301,17 @@ export default { components: { apexchart: VueApexCharts } }
 .stat-card--info    .stat-card__icon  { background: #f5f3ff; color: #7c3aed; }
 .stat-card--neutral .stat-card__icon  { background: #f8fafc; color: #475569; }
 
+.stat-card__body {
+  flex: 1;
+  min-width: 0;
+  padding-right: 8px;
+}
+
 .stat-card__label  { font-size: 0.8rem; color: #94a3b8; font-weight: 500; margin-bottom: 4px; }
-.stat-card__value  { font-size: 1.4rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
+.stat-card__value  { font-size: 1.25rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
+@media (min-width: 640px) {
+  .stat-card__value  { font-size: 1.4rem; }
+}
 .stat-card__sub    {
   display: flex;
   align-items: center;

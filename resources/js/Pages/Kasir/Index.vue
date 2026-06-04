@@ -7,7 +7,7 @@ import axios from 'axios'
 import {
   Search, ShoppingCart, Trash2, Plus, Minus, CreditCard,
   Wallet, QrCode, Barcode, X, CheckCircle, Package,
-  Calculator, Percent,
+  Calculator, Percent, FolderDown, FolderOpen, AlertTriangle,
 } from '@lucide/vue'
 
 const toast   = useToast()
@@ -119,6 +119,18 @@ function handleKeydown(e) {
       showReceiptModal.value = false
       return
     }
+    if (showDraftSaveModal.value) {
+      showDraftSaveModal.value = false
+      return
+    }
+    if (showDraftListModal.value) {
+      showDraftListModal.value = false
+      return
+    }
+    if (showConfirmModal.value) {
+      showConfirmModal.value = false
+      return
+    }
   }
 
   // If user presses F2, open the payment modal
@@ -163,6 +175,7 @@ async function searchByBarcode(barcode) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  loadDraftsFromStorage()
   setTimeout(() => {
     searchInput.value?.focus()
   }, 100)
@@ -225,7 +238,239 @@ function setQty(index, val) {
 
 function clearCart() {
   cart.value = []
+  selectedCustomer.value = null
 }
+
+// ── Customer / Member Search ─────────────────────
+const customerSearchQuery   = ref('')
+const customerSearchResults = ref([])
+const customerSearching     = ref(false)
+const showCustomerDropdown   = ref(false)
+const selectedCustomer      = ref(null)
+const showAddCustomerModal   = ref(false)
+const customerNameInput     = ref(null)
+let customerSearchTimer     = null
+
+const customerForm = useForm({
+  name: '',
+  phone: '',
+  address: '',
+})
+
+async function searchCustomers(q) {
+  if (!q || q.length < 1) { customerSearchResults.value = []; return }
+  customerSearching.value = true
+  try {
+    const res = await axios.get(route('kasir.customer.search'), { params: { q } })
+    customerSearchResults.value = res.data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    customerSearching.value = false
+  }
+}
+
+watch(customerSearchQuery, (val) => {
+  clearTimeout(customerSearchTimer)
+  customerSearchTimer = setTimeout(() => searchCustomers(val), 200)
+})
+
+function selectCustomer(customer) {
+  selectedCustomer.value = customer
+  customerSearchQuery.value = ''
+  customerSearchResults.value = []
+  showCustomerDropdown.value = false
+}
+
+function handleCustomerBlur() {
+  setTimeout(() => {
+    showCustomerDropdown.value = false
+  }, 200)
+}
+
+function openAddCustomerModal() {
+  customerForm.reset()
+  customerForm.clearErrors()
+  showAddCustomerModal.value = true
+}
+
+async function submitAddCustomer() {
+  customerForm.processing = true
+  try {
+    const res = await axios.post(route('kasir.customer.store'), {
+      name: customerForm.name,
+      phone: customerForm.phone,
+      address: customerForm.address,
+    })
+    
+    if (res.data.success) {
+      selectedCustomer.value = res.data.customer
+      showAddCustomerModal.value = false
+      toast.success(res.data.message)
+    } else {
+      toast.error('Gagal menyimpan member')
+    }
+  } catch (e) {
+    if (e.response && e.response.data && e.response.data.errors) {
+      const errs = e.response.data.errors
+      if (errs.phone) {
+        toast.error('Nomor telepon sudah terdaftar untuk member lain!')
+      } else {
+        toast.error('Periksa kembali inputan member baru')
+      }
+    } else {
+      toast.error('Terjadi kesalahan saat menambah member')
+    }
+  } finally {
+    customerForm.processing = false
+  }
+}
+
+watch(showAddCustomerModal, (isOpen) => {
+  if (isOpen) {
+    setTimeout(() => {
+      customerNameInput.value?.focus()
+    }, 50)
+  }
+})
+
+// ── Draft Transactions ────────────────────────────
+const draftTransactions  = ref([])
+const showDraftSaveModal = ref(false)
+const showDraftListModal = ref(false)
+const draftLabel         = ref('')
+const draftLabelInput    = ref(null)
+
+const showConfirmModal   = ref(false)
+const confirmTitle      = ref('')
+const confirmMessage    = ref('')
+const confirmAction     = ref(null)
+
+function triggerConfirm(title, message, onConfirm) {
+  confirmTitle.value = title
+  confirmMessage.value = message
+  confirmAction.value = onConfirm
+  showConfirmModal.value = true
+}
+
+function executeConfirm() {
+  if (confirmAction.value) {
+    confirmAction.value()
+  }
+  showConfirmModal.value = false
+}
+
+function saveDraftsToStorage() {
+  localStorage.setItem('pos_draft_transactions', JSON.stringify(draftTransactions.value))
+}
+
+function loadDraftsFromStorage() {
+  const saved = localStorage.getItem('pos_draft_transactions')
+  if (saved) {
+    try {
+      draftTransactions.value = JSON.parse(saved)
+    } catch (e) {
+      console.error('Gagal memuat draf', e)
+    }
+  }
+}
+
+function openSaveDraftModal() {
+  if (cart.value.length === 0) {
+    toast.warning('Keranjang belanja kosong')
+    return
+  }
+  draftLabel.value = ''
+  showDraftSaveModal.value = true
+}
+
+function confirmSaveDraft() {
+  const label = draftLabel.value.trim() || `Draf #${draftTransactions.value.length + 1} (${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })})`
+  
+  draftTransactions.value.push({
+    id: Date.now(),
+    label: label,
+    cart: [...cart.value],
+    discountType: discountType.value,
+    discountValue: discountValue.value,
+    notes: notes.value,
+    customer: selectedCustomer.value ? { ...selectedCustomer.value } : null,
+    time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+  })
+  
+  saveDraftsToStorage()
+  clearCart()
+  discountValue.value = 0
+  notes.value = ''
+  selectedCustomer.value = null
+  
+  showDraftSaveModal.value = false
+  toast.success('Transaksi berhasil disimpan sebagai draf')
+}
+
+function recallDraft(index) {
+  const draft = draftTransactions.value[index]
+  
+  const proceedRecall = () => {
+    cart.value = [...draft.cart]
+    discountType.value = draft.discountType
+    discountValue.value = draft.discountValue
+    notes.value = draft.notes
+    selectedCustomer.value = draft.customer ? { ...draft.customer } : null
+    
+    // Hapus dari daftar draf setelah di-recall
+    draftTransactions.value.splice(index, 1)
+    saveDraftsToStorage()
+    
+    showDraftListModal.value = false
+    toast.success(`Draf "${draft.label}" berhasil dipanggil`)
+    
+    setTimeout(() => {
+      searchInput.value?.focus()
+    }, 100)
+  }
+
+  if (cart.value.length > 0) {
+    triggerConfirm(
+      'Keranjang Tidak Kosong',
+      'Keranjang belanja saat ini terisi barang. Apakah Anda yakin ingin mengosongkannya dan memuat draf ini?',
+      proceedRecall
+    )
+  } else {
+    proceedRecall()
+  }
+}
+
+function deleteDraft(index) {
+  const label = draftTransactions.value[index].label
+  triggerConfirm(
+    'Hapus Draf Transaksi',
+    `Apakah Anda yakin ingin menghapus draf "${label}" secara permanen?`,
+    () => {
+      draftTransactions.value.splice(index, 1)
+      saveDraftsToStorage()
+      toast.success(`Draf "${label}" dihapus`)
+    }
+  )
+}
+
+function getDraftTotal(draft) {
+  const sub = draft.cart.reduce((sum, item) => sum + item.subtotal, 0)
+  const disc = draft.discountType === 'percent' 
+    ? sub * (draft.discountValue / 100) 
+    : Math.min(draft.discountValue, sub)
+  const taxPercent = parseFloat(settings.value?.tax_percentage ?? 0)
+  const tax = (sub - disc) * (taxPercent / 100)
+  return sub - disc + tax
+}
+
+watch(showDraftSaveModal, (isOpen) => {
+  if (isOpen) {
+    setTimeout(() => {
+      draftLabelInput.value?.focus()
+    }, 50)
+  }
+})
 
 // ── Pricing ───────────────────────────────────────
 const discountType  = ref('nominal') // 'nominal' | 'percent'
@@ -351,6 +596,7 @@ async function submitTransaction() {
       paid_amount:    paidAmount.value,
       payment_method: paymentMethod.value,
       notes:          notes.value,
+      customer_id:    selectedCustomer.value?.id ?? null,
     })
 
     // Tampilkan struk
@@ -365,6 +611,7 @@ async function submitTransaction() {
       change:   change.value,
       method:   paymentMethod.value,
       time:     new Date().toLocaleString('id-ID'),
+      customer: selectedCustomer.value ? { ...selectedCustomer.value } : null,
     }
     showPaymentModal.value = false
     showSuccessModal.value = true
@@ -374,6 +621,7 @@ async function submitTransaction() {
     discountValue.value = 0
     paidAmount.value    = 0
     notes.value         = ''
+    selectedCustomer.value = null
 
     toast.success('Transaksi berhasil!')
   } catch (e) {
@@ -426,28 +674,41 @@ function formatCurrency(val) {
   <AppLayout>
     <template #title>Kasir</template>
 
-    <div class="pos-layout">
+    <div class="pos-layout no-print">
 
       <!-- LEFT: Products Search + Cart -->
       <div class="pos-left">
 
         <!-- Search Bar -->
         <div class="search-area">
-          <div class="search-wrap">
-            <Search :size="18" class="search-icon" />
-            <input
-              ref="searchInput"
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cari produk (nama / SKU / barcode) atau scan barcode..."
-              class="pos-search"
-              autocomplete="off"
-              @keydown.down.prevent="highlightNext"
-              @keydown.up.prevent="highlightPrev"
-              @keydown.enter.prevent="selectHighlighted"
-            />
-            <button v-if="searchQuery" @click="searchQuery = ''; searchResults = []" class="search-clear">
-              <X :size="16" />
+          <div class="flex items-center gap-2">
+            <div class="search-wrap flex-1">
+              <Search :size="18" class="search-icon" />
+              <input
+                ref="searchInput"
+                v-model="searchQuery"
+                type="text"
+                placeholder="Cari produk (nama / SKU / barcode) atau scan barcode..."
+                class="pos-search"
+                autocomplete="off"
+                @keydown.down.prevent="highlightNext"
+                @keydown.up.prevent="highlightPrev"
+                @keydown.enter.prevent="selectHighlighted"
+              />
+              <button v-if="searchQuery" @click="searchQuery = ''; searchResults = []" class="search-clear">
+                <X :size="16" />
+              </button>
+            </div>
+
+            <!-- Draft Queue Button -->
+            <button
+              v-if="draftTransactions.length > 0"
+              @click="showDraftListModal = true"
+              class="draft-list-trigger"
+              type="button"
+            >
+              <FolderOpen :size="16" />
+              <span>Draf ({{ draftTransactions.length }})</span>
             </button>
           </div>
 
@@ -535,6 +796,64 @@ function formatCurrency(val) {
 
       <!-- RIGHT: Summary + Pay -->
       <div class="pos-right">
+        <!-- Customer Section Card -->
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+          <h4 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
+            <User :size="16" class="text-indigo-500" />
+            Pelanggan / Member
+          </h4>
+          
+          <!-- Selected Customer -->
+          <div v-if="selectedCustomer" class="flex items-center justify-between p-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
+            <div>
+              <p class="font-bold text-slate-850 dark:text-slate-250 text-sm">{{ selectedCustomer.name }}</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-450 font-bold mt-0.5">
+                {{ selectedCustomer.phone || '-' }} · Poin: <span class="text-indigo-600 dark:text-indigo-400 font-extrabold">{{ selectedCustomer.points }}</span>
+              </p>
+            </div>
+            <button @click="selectedCustomer = null" class="p-1 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 rounded-lg transition" type="button" title="Lepas Pelanggan">
+              <X :size="16" />
+            </button>
+          </div>
+
+          <!-- Select/Search Customer -->
+          <div v-else class="flex gap-2 relative">
+            <div class="relative flex-1">
+              <input
+                v-model="customerSearchQuery"
+                type="text"
+                class="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                placeholder="Cari member (nama / HP)..."
+                @focus="showCustomerDropdown = true"
+                @blur="handleCustomerBlur"
+              />
+              <Search :size="12" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              
+              <!-- Customer Dropdown List -->
+              <div v-if="showCustomerDropdown && (customerSearchResults.length > 0 || customerSearching)" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-48 overflow-y-auto z-50">
+                <div v-if="customerSearching" class="p-3 text-xs text-center text-slate-400">Mencari...</div>
+                <div
+                  v-for="c in customerSearchResults"
+                  :key="c.id"
+                  @mousedown="selectCustomer(c)"
+                  class="p-2.5 hover:bg-slate-50 dark:hover:bg-slate-900 text-xs cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0"
+                >
+                  <p class="font-bold text-slate-800 dark:text-slate-200">{{ c.name }}</p>
+                  <p class="text-slate-450 dark:text-slate-500 text-[10px]">{{ c.phone || '-' }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              @click="openAddCustomerModal"
+              class="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl border border-indigo-100 dark:border-indigo-900/30 transition flex items-center justify-center whitespace-nowrap"
+              type="button"
+            >
+              + Baru
+            </button>
+          </div>
+        </div>
+
         <div class="summary-card">
           <h3 class="summary-title">Ringkasan</h3>
 
@@ -588,6 +907,17 @@ function formatCurrency(val) {
           >
             <Calculator :size="20" />
             Proses Pembayaran [F2]
+          </button>
+
+          <!-- Draft Button -->
+          <button
+            v-if="cart.length > 0"
+            class="save-draft-btn"
+            @click="openSaveDraftModal"
+            type="button"
+          >
+            <FolderDown :size="16" />
+            Simpan sebagai Draf
           </button>
 
           <!-- Clear cart -->
@@ -682,6 +1012,10 @@ function formatCurrency(val) {
 
           <!-- Transaction details card -->
           <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2.5 text-left border border-slate-100 dark:border-slate-800 text-sm">
+            <div v-if="lastTransaction?.customer" class="flex justify-between">
+              <span class="text-slate-500">Member</span>
+              <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ lastTransaction.customer.name }}</span>
+            </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Total Belanja</span>
               <span class="font-semibold text-slate-800 dark:text-slate-200">{{ formatCurrency(lastTransaction?.total) }}</span>
@@ -725,7 +1059,7 @@ function formatCurrency(val) {
             <h3>Transaksi Berhasil</h3>
             <button @click="showReceiptModal = false" class="modal__close"><X :size="16" /></button>
           </div>
-          <div class="receipt" v-if="lastTransaction">
+          <div :class="['receipt', settings?.receipt_paper_width === '80mm' ? 'receipt-80mm' : 'receipt-58mm']" v-if="lastTransaction">
             <!-- Receipt content -->
             <div class="receipt__header">
               <h2>{{ settings?.store_name ?? 'Toko' }}</h2>
@@ -742,6 +1076,12 @@ function formatCurrency(val) {
               </div>
               <div class="receipt__meta-row">
                 <span>Metode</span><span class="capitalize">{{ lastTransaction.method }}</span>
+              </div>
+              <div v-if="lastTransaction.customer" class="receipt__meta-row">
+                <span>Member</span><span>{{ lastTransaction.customer.name }}</span>
+              </div>
+              <div v-if="lastTransaction.customer" class="receipt__meta-row">
+                <span>Poin Baru</span><span>+{{ Math.floor(lastTransaction.total / 10000) }} Poin</span>
               </div>
             </div>
             <div class="receipt__divider">--------------------------------</div>
@@ -773,6 +1113,189 @@ function formatCurrency(val) {
             <button @click="showReceiptModal = false" class="btn-secondary">Tutup</button>
             <button @click="printReceipt" class="btn-primary">
               🖨️ Print Struk
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── Add Customer Modal ── -->
+    <Teleport to="body">
+      <div v-if="showAddCustomerModal" class="modal-overlay" @click.self="showAddCustomerModal = false">
+        <div class="modal" style="max-width: 380px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+          <div class="modal__header">
+            <h3>Tambah Member Baru</h3>
+            <button @click="showAddCustomerModal = false" class="modal__close"><X :size="16" /></button>
+          </div>
+          <form @submit.prevent="submitAddCustomer">
+            <div class="modal__body">
+              <div class="form-group">
+                <label class="label">Nama Lengkap</label>
+                <input
+                  ref="customerNameInput"
+                  v-model="customerForm.name"
+                  type="text"
+                  class="input"
+                  placeholder="Masukkan nama member"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="label">No. Telepon / HP</label>
+                <input
+                  v-model="customerForm.phone"
+                  type="text"
+                  class="input"
+                  placeholder="Contoh: 081234567890"
+                />
+              </div>
+              <div class="form-group">
+                <label class="label">Alamat (Opsional)</label>
+                <textarea
+                  v-model="customerForm.address"
+                  class="pos-notes"
+                  placeholder="Masukkan alamat lengkap..."
+                  rows="2"
+                  style="resize: none;"
+                />
+              </div>
+            </div>
+            <div class="modal__footer">
+              <button type="button" @click="showAddCustomerModal = false" class="btn-secondary">Batal</button>
+              <button type="submit" class="btn-primary" :disabled="customerForm.processing" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
+                {{ customerForm.processing ? 'Menyimpan...' : 'Simpan Member' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── Save Draft Modal ── -->
+    <Teleport to="body">
+      <div v-if="showDraftSaveModal" class="modal-overlay" @click.self="showDraftSaveModal = false">
+        <div class="modal" style="max-width: 380px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+          <div class="modal__header">
+            <h3>Simpan Draf Transaksi</h3>
+            <button @click="showDraftSaveModal = false" class="modal__close"><X :size="16" /></button>
+          </div>
+          <div class="modal__body">
+            <p class="text-xs text-slate-500 mb-2">
+              Beri nama atau label pengenal pada draf ini agar mudah diidentifikasi saat dipanggil kembali.
+            </p>
+            <div class="form-group">
+              <label class="label">Nama / Label Pengenal (Opsional)</label>
+              <input
+                ref="draftLabelInput"
+                v-model="draftLabel"
+                type="text"
+                class="input"
+                placeholder="Contoh: Pelanggan Jaket Hitam, Budi, dll."
+                maxlength="50"
+                @keydown.enter.prevent="confirmSaveDraft"
+              />
+            </div>
+          </div>
+          <div class="modal__footer">
+            <button @click="showDraftSaveModal = false" class="btn-secondary">Batal</button>
+            <button @click="confirmSaveDraft" class="btn-primary" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
+              <FolderDown :size="16" />
+              Simpan Draf
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── Draft List Modal ── -->
+    <Teleport to="body">
+      <div v-if="showDraftListModal" class="modal-overlay" @click.self="showDraftListModal = false">
+        <div class="modal" style="max-width: 600px; width: 90%; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+          <div class="modal__header">
+            <h3>Daftar Draf Transaksi</h3>
+            <button @click="showDraftListModal = false" class="modal__close"><X :size="16" /></button>
+          </div>
+          <div class="modal__body">
+            <div v-if="draftTransactions.length === 0" class="text-center py-8 text-slate-400">
+              Tidak ada draf transaksi tersimpan.
+            </div>
+            <div v-else class="overflow-x-auto">
+              <table class="w-full text-left" style="border-collapse: collapse;">
+                <thead>
+                  <tr class="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <th class="pb-3 text-left">Label Pengenal</th>
+                    <th class="pb-3 text-left">Waktu</th>
+                    <th class="pb-3 text-center">Item</th>
+                    <th class="pb-3 text-right">Total</th>
+                    <th class="pb-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(draft, idx) in draftTransactions" :key="draft.id" class="text-sm hover:bg-slate-50/50">
+                    <td class="py-3 font-semibold text-slate-700 dark:text-slate-200">{{ draft.label }}</td>
+                    <td class="py-3 text-xs text-slate-400">{{ draft.time }}</td>
+                    <td class="py-3 text-center text-slate-600 dark:text-slate-400">
+                      {{ draft.cart.reduce((sum, item) => sum + item.qty, 0) }} pcs
+                    </td>
+                    <td class="py-3 text-right font-extrabold text-slate-900 dark:text-white">
+                      {{ formatCurrency(getDraftTotal(draft)) }}
+                    </td>
+                    <td class="py-3 text-right space-x-2 whitespace-nowrap">
+                      <button
+                        @click="recallDraft(idx)"
+                        class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition"
+                      >
+                        Panggil
+                      </button>
+                      <button
+                        @click="deleteDraft(idx)"
+                        class="px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition inline-flex items-center justify-center"
+                      >
+                        <Trash2 :size="12" />
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal__footer">
+            <button @click="showDraftListModal = false" class="btn-secondary">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── Custom Confirmation Modal ── -->
+    <Teleport to="body">
+      <div v-if="showConfirmModal" class="modal-overlay" style="z-index: 99999;" @click.self="showConfirmModal = false">
+        <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl w-96 shadow-2xl p-6 text-center space-y-5 modal-bounce">
+          <div class="mx-auto w-14 h-14 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center justify-center">
+            <AlertTriangle :size="28" />
+          </div>
+          
+          <div class="space-y-2">
+            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">{{ confirmTitle }}</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+              {{ confirmMessage }}
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <button 
+              type="button" 
+              @click="showConfirmModal = false" 
+              class="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl transition duration-150 cursor-pointer active:scale-95"
+            >
+              Batal
+            </button>
+            <button 
+              type="button" 
+              @click="executeConfirm"
+              class="w-full py-2.5 px-4 bg-red-650 hover:bg-red-755 text-white text-sm font-bold rounded-xl transition duration-150 shadow-md shadow-red-600/10 cursor-pointer active:scale-95"
+              style="background-color: #dc2626;"
+            >
+              Ya, Lanjutkan
             </button>
           </div>
         </div>
@@ -908,12 +1431,11 @@ function formatCurrency(val) {
 .discount-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
 
 /* ── Right ── */
-.pos-right { display: flex; flex-direction: column; }
+.pos-right { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 80px; height: fit-content; }
 .summary-card {
   background: white; border-radius: 14px; padding: 20px;
   border: 1px solid #f1f5f9;
   display: flex; flex-direction: column; gap: 14px;
-  position: sticky; top: 80px;
 }
 .summary-title { font-size: 0.9rem; font-weight: 700; color: #0f172a; }
 .summary-rows { display: flex; flex-direction: column; gap: 6px; }
@@ -1055,9 +1577,91 @@ function formatCurrency(val) {
 
 /* Print styles */
 @media print {
-  .no-print, .modal__footer, .modal__header { display: none !important; }
-  .modal-overlay { position: static; background: none; backdrop-filter: none; }
-  .modal { box-shadow: none; border-radius: 0; max-height: none; }
-  .receipt { font-size: 11px; }
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  body {
+    background-color: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .no-print, .modal__footer, .modal__header, aside, nav, header, .sidebar, .navbar {
+    display: none !important;
+  }
+  .app-shell, .main-content, .page-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    display: block !important;
+    background: transparent !important;
+  }
+  .modal-overlay {
+    position: static !important;
+    display: block !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+  }
+  .modal {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+  }
+  .receipt {
+    font-family: 'Courier New', Courier, monospace !important;
+    padding: 2mm 3mm !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+  }
+  .receipt-58mm {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+  .receipt-80mm {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+  .receipt__divider {
+    letter-spacing: -1px;
+  }
 }
+
+.save-draft-btn {
+  width: 100%; padding: 10px;
+  background: none; border: 1px solid #c7d2fe; border-radius: 8px;
+  color: #4f46e5; font-size: 0.8rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all 0.15s;
+  margin-top: 6px;
+}
+.save-draft-btn:hover:not(:disabled) { background: #e0e7ff; }
+.save-draft-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.draft-list-trigger {
+  height: 48px; padding: 0 16px;
+  background: #eff6ff; color: #2563eb;
+  border: 1px solid #bfdbfe; border-radius: 12px;
+  font-weight: 600; font-size: 0.85rem; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.15s; white-space: nowrap;
+}
+.draft-list-trigger:hover { background: #dbeafe; }
 </style>
