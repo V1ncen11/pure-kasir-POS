@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\StockLog;
+use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -41,7 +42,11 @@ class ProductController extends Controller
     public function create(): Response
     {
         $categories = Category::where('is_active', true)->orderBy('name')->get(['id', 'name']);
-        return Inertia::render('Products/Form', ['categories' => $categories]);
+        $units = Unit::orderBy('name')->pluck('name');
+        return Inertia::render('Products/Form', [
+            'categories' => $categories,
+            'units'      => $units,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,7 +54,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name'        => 'required|string|max:200',
             'sku'         => 'required|string|max:100|unique:products',
-            'barcode'     => 'nullable|string|max:100|unique:products',
+            'barcode'     => 'nullable|string|max:100',
             'category_id' => 'nullable|exists:categories,id',
             'unit'        => 'required|string|max:20',
             'buy_price'   => 'required|numeric|min:0',
@@ -60,6 +65,21 @@ class ProductController extends Controller
             'is_active'   => 'boolean',
             'image'       => 'nullable|image|max:2048',
         ]);
+
+        // Cek duplikasi barcode secara manual untuk memunculkan nama produk yang bentrok
+        if (!empty($data['barcode'])) {
+            $existing = Product::where('barcode', $data['barcode'])->first();
+            if ($existing) {
+                return back()->withErrors([
+                    'barcode' => "Nomor ini sudah dipakai di produk '{$existing->name}'. Cek kembali nomor barcode yang ada di kemasan."
+                ])->withInput();
+            }
+        }
+
+        // Pastikan sell_price tidak lebih rendah dari buy_price (opsional warning)
+        if ((float) $data['sell_price'] < (float) $data['buy_price']) {
+            return back()->withErrors(['sell_price' => 'Harga jual tidak boleh lebih rendah dari harga beli.'])->withInput();
+        }
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
@@ -89,9 +109,11 @@ class ProductController extends Controller
     public function edit(Product $product): Response
     {
         $categories = Category::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+        $units = Unit::orderBy('name')->pluck('name');
         return Inertia::render('Products/Form', [
             'product'    => $product,
             'categories' => $categories,
+            'units'      => $units,
         ]);
     }
 
@@ -100,7 +122,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name'        => 'required|string|max:200',
             'sku'         => 'required|string|max:100|unique:products,sku,' . $product->id,
-            'barcode'     => 'nullable|string|max:100|unique:products,barcode,' . $product->id,
+            'barcode'     => 'nullable|string|max:100',
             'category_id' => 'nullable|exists:categories,id',
             'unit'        => 'required|string|max:20',
             'buy_price'   => 'required|numeric|min:0',
@@ -111,9 +133,23 @@ class ProductController extends Controller
             'image'       => 'nullable|image|max:2048',
         ]);
 
+        // Cek duplikasi barcode secara manual untuk memunculkan nama produk yang bentrok
+        if (!empty($data['barcode'])) {
+            $existing = Product::where('barcode', $data['barcode'])
+                ->where('id', '!=', $product->id)
+                ->first();
+            if ($existing) {
+                return back()->withErrors([
+                    'barcode' => "Nomor ini sudah dipakai di produk '{$existing->name}'. Cek kembali nomor barcode yang ada di kemasan."
+                ])->withInput();
+            }
+        }
+
         if ($request->hasFile('image')) {
             if ($product->image) Storage::disk('public')->delete($product->image);
             $data['image'] = $request->file('image')->store('products', 'public');
+        } else {
+            unset($data['image']);
         }
 
         $product->update($data);
@@ -126,6 +162,11 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
+        // Proteksi: jangan hapus produk yang sudah pernah dijual
+        if ($product->transactionItems()->exists()) {
+            return back()->with('error', "Produk '{$product->name}' tidak dapat dihapus karena sudah pernah digunakan dalam transaksi. Nonaktifkan produk ini jika tidak ingin ditampilkan.");
+        }
+
         $productName = $product->name;
         if ($product->image) Storage::disk('public')->delete($product->image);
         $product->delete();

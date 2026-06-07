@@ -1,9 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
-import { router, Link, usePage } from '@inertiajs/vue3'
-import { useToast } from 'vue-toastification'
-import { watch } from 'vue'
+import { router, Link } from '@inertiajs/vue3'
 import {
   Plus, Search, Filter, Package, Pencil, Trash2,
   ArrowUpCircle, AlertTriangle, ChevronDown,
@@ -15,14 +13,6 @@ const props = defineProps({
   categories: Array,
   filters: Object,
 })
-
-const toast = useToast()
-const page  = usePage()
-
-watch(() => page.props.flash, (flash) => {
-  if (flash.success) toast.success(flash.success)
-  if (flash.error)   toast.error(flash.error)
-}, { immediate: true })
 
 // Filters
 const search    = ref(props.filters?.search ?? '')

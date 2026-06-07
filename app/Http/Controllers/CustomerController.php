@@ -64,6 +64,11 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer): RedirectResponse
     {
+        // Proteksi: jangan hapus pelanggan yang sudah pernah bertransaksi
+        if ($customer->transactions()->exists()) {
+            return back()->with('error', "Pelanggan '{$customer->name}' tidak dapat dihapus karena sudah memiliki riwayat transaksi. Data pelanggan perlu dipertahankan untuk integritas laporan.");
+        }
+
         $customerName = $customer->name;
         $customer->delete();
 

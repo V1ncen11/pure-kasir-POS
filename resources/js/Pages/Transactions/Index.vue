@@ -66,18 +66,27 @@ const resetFilters = () => {
 }
 
 const voidTarget = ref(null)
+const voidPassword = ref('')
 const confirmVoid = (t) => {
   voidTarget.value = t
+  voidPassword.value = ''
 }
 const performVoid = () => {
   if (!voidTarget.value) return
-  router.post(route('transactions.void', voidTarget.value.id), {}, {
+  if (!voidPassword.value) {
+    toast.error('Kata sandi konfirmasi wajib diisi!')
+    return
+  }
+  router.post(route('transactions.void', voidTarget.value.id), {
+    password: voidPassword.value
+  }, {
     onSuccess: () => {
       toast.success(`Transaksi ${voidTarget.value.invoice_number} berhasil di-void`)
       voidTarget.value = null
+      voidPassword.value = ''
     },
     onError: (errors) => {
-      toast.error(errors.error || 'Gagal membatalkan transaksi')
+      toast.error(errors.password || errors.error || 'Gagal membatalkan transaksi')
     }
   })
 }
@@ -351,6 +360,18 @@ const performVoid = () => {
           <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-1">
             Apakah Anda yakin ingin membatalkan transaksi <span class="font-semibold text-slate-900 dark:text-white">"{{ voidTarget.invoice_number }}"</span>?
           </p>
+        </div>
+
+        <!-- Password input -->
+        <div class="text-left space-y-1.5">
+          <label class="block text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">Kata Sandi Konfirmasi</label>
+          <input 
+            v-model="voidPassword" 
+            type="password" 
+            placeholder="Masukkan kata sandi akun Anda" 
+            class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-905 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm transition-all duration-200"
+            @keyup.enter="performVoid"
+          />
         </div>
 
         <!-- Actions -->

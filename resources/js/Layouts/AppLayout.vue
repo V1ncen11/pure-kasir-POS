@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Link, usePage, router } from '@inertiajs/vue3'
+import { useToast } from 'vue-toastification'
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -20,12 +21,34 @@ import {
   Truck,
   ArrowDownToLine,
   History,
+  Ruler,
 } from '@lucide/vue'
 
 const page = usePage()
 const user  = computed(() => page.props.auth.user)
 const settings = computed(() => page.props.settings)
 const lowStockCount = computed(() => page.props.lowStockCount ?? 0)
+
+const toast = useToast()
+
+watch(() => page.props.flash, (flash) => {
+  if (flash?.success) toast.success(flash.success)
+  if (flash?.error)   toast.error(flash.error)
+}, { immediate: true, deep: true })
+
+watch(() => page.props.status, (status) => {
+  if (status) {
+    if (status === 'profile-updated') {
+      toast.success('Informasi profil berhasil diperbarui!')
+    } else if (status === 'avatar-updated') {
+      toast.success('Foto profil berhasil diperbarui!')
+    } else if (status === 'password-updated') {
+      toast.success('Kata sandi berhasil diperbarui!')
+    } else {
+      toast.info(status)
+    }
+  }
+}, { immediate: true })
 
 const sidebarOpen      = ref(true)
 const mobileOpen       = ref(false)
@@ -95,6 +118,12 @@ const navItems = computed(() => {
       label: 'Kategori',
       icon: Tag,
       route: 'categories.index',
+      roles: ['admin'],
+    },
+    {
+      label: 'Satuan',
+      icon: Ruler,
+      route: 'satuan.index',
       roles: ['admin'],
     },
     {
@@ -176,7 +205,6 @@ function isActive(routeName) {
               <span class="text-blue-600 ml-1">{{ formattedStoreName.middle }}</span>
               <span class="text-sky-500 ml-1" v-if="formattedStoreName.last">{{ formattedStoreName.last }}</span>
             </span>
-            <span class="sidebar__brand-sub">POS System</span>
           </div>
         </Transition>
         <button class="sidebar__toggle" @click="sidebarOpen = !sidebarOpen">
@@ -211,9 +239,10 @@ function isActive(routeName) {
 
       <!-- User info -->
       <div class="sidebar__footer">
-        <div class="sidebar__user">
-          <div class="sidebar__user-avatar">
-            <User :size="18" />
+        <Link :href="route('profile.edit')" class="sidebar__user" title="Profil Saya">
+          <div class="sidebar__user-avatar" style="overflow:hidden;">
+            <img v-if="user?.avatar_url" :src="user.avatar_url" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />
+            <User v-else :size="18" />
           </div>
           <Transition name="fade-slide">
             <div v-if="sidebarOpen || mobileOpen" class="sidebar__user-info">
@@ -224,7 +253,7 @@ function isActive(routeName) {
               </div>
             </div>
           </Transition>
-        </div>
+        </Link>
         <button
           v-if="sidebarOpen || mobileOpen"
           class="sidebar__logout"
@@ -265,13 +294,16 @@ function isActive(routeName) {
           </Link>
 
           <!-- User dropdown -->
-          <div class="navbar__user">
-            <div class="navbar__user-avatar"><User :size="18" /></div>
+          <Link :href="route('profile.edit')" class="navbar__user" title="Profil Saya">
+            <div class="navbar__user-avatar" style="overflow:hidden;">
+              <img v-if="user?.avatar_url" :src="user.avatar_url" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />
+              <User v-else :size="18" />
+            </div>
             <div class="navbar__user-meta">
               <span class="navbar__user-name">{{ user?.name }}</span>
               <span class="navbar__user-role">{{ user?.role === 'admin' ? 'Admin' : 'Kasir' }}</span>
             </div>
-          </div>
+          </Link>
 
           <!-- Logout Button (Top Navbar) -->
           <button
@@ -937,5 +969,33 @@ function isActive(routeName) {
 @keyframes logoutBounceOut {
   0%   { opacity: 1; transform: scale(1) translateY(0); }
   100% { opacity: 0; transform: scale(0.8) translateY(16px); }
+}
+
+/* Global Print Styles (Shared across all pages) */
+@media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  body {
+    background-color: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .no-print, aside, nav, header, .sidebar, .navbar, .mobile-overlay {
+    display: none !important;
+  }
+  .app-shell, .main-content, .page-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    display: block !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
 </style>

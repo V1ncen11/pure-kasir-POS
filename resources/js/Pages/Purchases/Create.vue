@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
-import { Plus, Trash2, Save, ArrowLeft, Search } from '@lucide/vue'
+import { Plus, Trash2, Save, ArrowLeft, Search, AlertTriangle } from '@lucide/vue'
 
 const props = defineProps({
   suppliers: Array,
@@ -86,6 +86,17 @@ const formatCurrency = (value) => {
     currency: 'IDR',
     minimumFractionDigits: 0
   }).format(value ?? 0)
+}
+
+const lowStockProducts = computed(() => {
+  return (props.products || [])
+    .filter(p => p.stock <= p.min_stock)
+    .sort((a, b) => a.stock - b.stock)
+})
+
+const getQtyInCart = (productId) => {
+  const item = form.items.find(i => i.product_id === productId)
+  return item ? item.qty : 0
 }
 
 const submit = () => {
@@ -268,6 +279,46 @@ const submit = () => {
             <span v-if="form.errors.items" class="text-error text-center mt-2 block">{{ form.errors.items }}</span>
           </div>
         </div>
+
+        <!-- Rekomendasi Stok Menipis -->
+        <div v-if="lowStockProducts.length > 0" class="card mt-4 low-stock-card">
+          <div class="card-header flex items-center justify-between bg-amber-50/50 dark:bg-amber-955/10 border-b border-amber-100/50 dark:border-amber-900/30" style="padding: 12px 16px;">
+            <h3 class="flex items-center gap-2" style="color: #b45309; font-weight: 700; font-size: 0.9rem; margin: 0;">
+              <AlertTriangle :size="16" class="text-amber-600 animate-bounce" />
+              Rekomendasi Restock
+            </h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+              {{ lowStockProducts.length }} Produk
+            </span>
+          </div>
+          <div class="card-body p-0 low-stock-list">
+            <div v-for="product in lowStockProducts" :key="product.id" class="low-stock-item hover:bg-amber-50/20 transition">
+              <div style="min-width: 0; flex: 1; padding-right: 8px;">
+                <div class="font-semibold text-slate-800 truncate" style="font-size: 0.82rem; color: #1e293b;">
+                  {{ product.name }}
+                </div>
+                <div class="text-gray-500 mt-0.5" style="font-size: 0.72rem;">
+                  Stok: <span class="font-bold text-red-600">{{ product.stock }}</span> <span style="opacity: 0.6;">/ {{ product.min_stock }} {{ product.unit }}</span>
+                </div>
+              </div>
+              
+              <button
+                type="button"
+                @click="addProduct(product)"
+                class="btn-add-low-stock"
+                :class="{ 'btn-add-low-stock--added': getQtyInCart(product.id) > 0 }"
+              >
+                <template v-if="getQtyInCart(product.id) > 0">
+                  <span>+{{ getQtyInCart(product.id) }}</span>
+                </template>
+                <template v-else>
+                  <Plus :size="12" />
+                  <span>Tambah</span>
+                </template>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </form>
 
@@ -371,4 +422,53 @@ const submit = () => {
 .hover\:bg-red-50:hover { background: #fef2f2; }
 
 .summary-box { background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+
+/* Rekomendasi Stok Menipis */
+.low-stock-card {
+  height: auto !important;
+}
+.low-stock-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+.low-stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.low-stock-item:last-child {
+  border-bottom: none;
+}
+.btn-add-low-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn-add-low-stock:hover {
+  background-color: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
+}
+.btn-add-low-stock--added {
+  background-color: #d97706;
+  color: white;
+  border-color: #d97706;
+}
+.btn-add-low-stock--added:hover {
+  background-color: #b45309;
+  color: white;
+  border-color: #b45309;
+}
 </style>

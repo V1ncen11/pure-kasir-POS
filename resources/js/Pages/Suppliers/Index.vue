@@ -1,22 +1,12 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { Head, useForm, router, usePage } from '@inertiajs/vue3'
+import { Head, useForm, router } from '@inertiajs/vue3'
 import { Plus, Edit2, Trash2, X } from '@lucide/vue'
-import { useToast } from 'vue-toastification'
 
 const props = defineProps({
   suppliers: Array
 })
-
-const toast = useToast()
-const page  = usePage()
-
-// Watch flash messages
-watch(() => page.props.flash, (flash) => {
-  if (flash && flash.success) toast.success(flash.success)
-  if (flash && flash.error)   toast.error(flash.error)
-}, { immediate: true })
 
 const isModalOpen = ref(false)
 const isEditing = ref(false)

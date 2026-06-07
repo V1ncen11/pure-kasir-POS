@@ -8,6 +8,7 @@ import { ref } from 'vue'
 const props = defineProps({
   product:    Object,
   categories: Array,
+  units:      Array,
 })
 
 const toast = useToast()
@@ -42,7 +43,7 @@ function clearImage() {
   imagePreview.value = null
 }
 
-const units = ['pcs', 'kg', 'gram', 'liter', 'ml', 'lusin', 'pack', 'roll', 'lembar', 'meter', 'box']
+
 
 function submit() {
   if (isEdit) {
@@ -99,7 +100,8 @@ function submit() {
               </div>
               <div>
                 <label class="label">Barcode</label>
-                <input v-model="form.barcode" type="text" class="input" placeholder="Scan atau ketik barcode" />
+                <input v-model="form.barcode" type="text" class="input" :class="{ 'input-error': form.errors.barcode }" placeholder="Scan atau ketik barcode" />
+                <p v-if="form.errors.barcode" class="error-msg">{{ form.errors.barcode }}</p>
               </div>
             </div>
             <div class="grid-2">

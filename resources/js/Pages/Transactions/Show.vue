@@ -209,57 +209,59 @@ const printReceipt = () => {
     </div>
 
     <!-- Thermal Print Layout (Hidden on Screen, visible only when printing) -->
-    <div :class="['print-only-receipt', settings?.receipt_paper_width === '80mm' ? 'receipt-80mm' : 'receipt-58mm']">
-      <div class="receipt">
-        <div class="receipt__header">
-          <h2>{{ settings?.store_name ?? 'Toko' }}</h2>
-          <p>{{ settings?.store_address }}</p>
-          <p>{{ settings?.store_phone }}</p>
-        </div>
-        <div class="receipt__divider">--------------------------------</div>
-        <div class="receipt__meta">
-          <div class="receipt__meta-row">
-            <span>Invoice</span><span>{{ transaction.invoice_number }}</span>
+    <Teleport to="body">
+      <div :class="['print-only-receipt', settings?.receipt_paper_width === '80mm' ? 'receipt-80mm' : 'receipt-58mm']">
+        <div class="receipt">
+          <div class="receipt__header">
+            <h2>{{ settings?.store_name ?? 'Toko' }}</h2>
+            <p>{{ settings?.store_address }}</p>
+            <p>{{ settings?.store_phone }}</p>
           </div>
-          <div class="receipt__meta-row">
-            <span>Waktu</span><span>{{ transaction.created_at }}</span>
-          </div>
-          <div class="receipt__meta-row">
-            <span>Metode</span><span class="capitalize">{{ transaction.payment_method === 'cash' ? 'Tunai' : transaction.payment_method }}</span>
-          </div>
-          <div v-if="transaction.customer" class="receipt__meta-row">
-            <span>Member</span><span>{{ transaction.customer.name }}</span>
-          </div>
-          <div v-if="transaction.customer" class="receipt__meta-row">
-            <span>Poin Baru</span><span>+{{ Math.floor(transaction.total / 10000) }} Poin</span>
-          </div>
-        </div>
-        <div class="receipt__divider">--------------------------------</div>
-        <div class="receipt__items">
-          <div v-for="item in transaction.items" :key="item.id" class="receipt__item">
-            <div class="receipt__item-name">{{ item.product_name }}</div>
-            <div class="receipt__item-row">
-              <span>{{ item.qty }} x {{ formatRupiah(item.price) }}</span>
-              <span>{{ formatRupiah(item.subtotal) }}</span>
+          <div class="receipt__divider">--------------------------------</div>
+          <div class="receipt__meta">
+            <div class="receipt__meta-row">
+              <span>Invoice</span><span>{{ transaction.invoice_number }}</span>
+            </div>
+            <div class="receipt__meta-row">
+              <span>Waktu</span><span>{{ transaction.created_at }}</span>
+            </div>
+            <div class="receipt__meta-row">
+              <span>Metode</span><span class="capitalize">{{ transaction.payment_method === 'cash' ? 'Tunai' : transaction.payment_method }}</span>
+            </div>
+            <div v-if="transaction.customer" class="receipt__meta-row">
+              <span>Member</span><span>{{ transaction.customer.name }}</span>
+            </div>
+            <div v-if="transaction.customer" class="receipt__meta-row">
+              <span>Poin Baru</span><span>+{{ Math.floor(transaction.total / 10000) }} Poin</span>
             </div>
           </div>
-        </div>
-        <div class="receipt__divider">--------------------------------</div>
-        <div class="receipt__totals">
-          <div class="receipt__total-row"><span>Subtotal</span><span>{{ formatRupiah(transaction.subtotal) }}</span></div>
-          <div v-if="transaction.discount > 0" class="receipt__total-row"><span>Diskon</span><span>- {{ formatRupiah(transaction.discount) }}</span></div>
-          <div v-if="transaction.tax > 0" class="receipt__total-row"><span>Pajak ({{ transaction.tax_percentage || 0 }}%)</span><span>{{ formatRupiah(transaction.tax) }}</span></div>
-          <div class="receipt__total-row receipt__total-row--bold"><span>TOTAL</span><span>{{ formatRupiah(transaction.total) }}</span></div>
-          <div class="receipt__total-row"><span>Bayar</span><span>{{ formatRupiah(transaction.paid_amount) }}</span></div>
-          <div class="receipt__total-row receipt__total-row--change"><span>Kembali</span><span>{{ formatRupiah(transaction.change_amount) }}</span></div>
-        </div>
-        <div class="receipt__divider">--------------------------------</div>
-        <div class="receipt__footer">
-          <p>{{ settings?.receipt_header ?? 'Terima kasih!' }}</p>
-          <p class="text-xs">{{ settings?.receipt_footer }}</p>
+          <div class="receipt__divider">--------------------------------</div>
+          <div class="receipt__items">
+            <div v-for="item in transaction.items" :key="item.id" class="receipt__item">
+              <div class="receipt__item-name">{{ item.product_name }}</div>
+              <div class="receipt__item-row">
+                <span>{{ item.qty }} x {{ formatRupiah(item.price) }}</span>
+                <span>{{ formatRupiah(item.subtotal) }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="receipt__divider">--------------------------------</div>
+          <div class="receipt__totals">
+            <div class="receipt__total-row"><span>Subtotal</span><span>{{ formatRupiah(transaction.subtotal) }}</span></div>
+            <div v-if="transaction.discount > 0" class="receipt__total-row"><span>Diskon</span><span>- {{ formatRupiah(transaction.discount) }}</span></div>
+            <div v-if="transaction.tax > 0" class="receipt__total-row"><span>Pajak ({{ transaction.tax_percentage || 0 }}%)</span><span>{{ formatRupiah(transaction.tax) }}</span></div>
+            <div class="receipt__total-row receipt__total-row--bold"><span>TOTAL</span><span>{{ formatRupiah(transaction.total) }}</span></div>
+            <div class="receipt__total-row"><span>Bayar</span><span>{{ formatRupiah(transaction.paid_amount) }}</span></div>
+            <div class="receipt__total-row receipt__total-row--change"><span>Kembali</span><span>{{ formatRupiah(transaction.change_amount) }}</span></div>
+          </div>
+          <div class="receipt__divider">--------------------------------</div>
+          <div class="receipt__footer">
+            <p>{{ settings?.receipt_header ?? 'Terima kasih!' }}</p>
+            <p class="text-xs">{{ settings?.receipt_footer }}</p>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </AppLayout>
 </template>
 
@@ -279,17 +281,9 @@ const printReceipt = () => {
     margin: 0 !important;
     padding: 0 !important;
   }
-  .no-print, aside, nav, header, .sidebar, .navbar, .screen-only-invoice {
+  /* Hide the screen UI elements */
+  .no-print, .screen-only-invoice {
     display: none !important;
-  }
-  .app-shell, .main-content, .page-content {
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: 0 !important;
-    height: auto !important;
-    width: 100% !important;
-    display: block !important;
-    background: transparent !important;
   }
   .print-only-receipt {
     display: block !important;

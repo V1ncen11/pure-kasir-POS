@@ -1,14 +1,21 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
+import JsBarcode from 'jsbarcode'
 import {
   Search, ShoppingCart, Trash2, Plus, Minus, CreditCard,
   Wallet, QrCode, Barcode, X, CheckCircle, Package,
   Calculator, Percent, FolderDown, FolderOpen, AlertTriangle,
+  Database, User
 } from '@lucide/vue'
+
+const props = defineProps({
+  products: { type: Array, default: () => [] },
+  categories: { type: Array, default: () => [] },
+})
 
 const toast   = useToast()
 const page    = usePage()
@@ -16,78 +23,34 @@ const settings = computed(() => page.props.settings)
 
 // ── Search & Products ─────────────────────────────
 const searchQuery      = ref('')
-const searchResults    = ref([])
-const searching        = ref(false)
 const searchInput      = ref(null)
-const highlightedIndex = ref(-1)
-const resultsContainer = ref(null)
-let searchTimer        = null
+const selectedCategory = ref(null)
 
-async function searchProducts(q) {
-  if (!q || q.length < 1) { searchResults.value = []; return }
-  searching.value = true
-  try {
-    const res = await axios.get(route('kasir.product.search'), { params: { q } })
-    searchResults.value = res.data
-  } catch (e) {
-    console.error(e)
-  } finally {
-    searching.value = false
+const filteredProducts = computed(() => {
+  let list = props.products || []
+  if (selectedCategory.value !== null) {
+    list = list.filter(p => p.category_id === selectedCategory.value)
   }
-}
-
-watch(searchQuery, (val) => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => searchProducts(val), 150)
-  highlightedIndex.value = -1
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(p => 
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.barcode && p.barcode.toLowerCase().includes(q))
+    )
+  }
+  return list
 })
 
-watch(searchResults, (newResults) => {
-  if (newResults && newResults.length > 0) {
-    highlightedIndex.value = 0
-  } else {
-    highlightedIndex.value = -1
-  }
-})
-
-function highlightNext() {
-  if (searchResults.value.length === 0) return
-  highlightedIndex.value = (highlightedIndex.value + 1) % searchResults.value.length
-  scrollToHighlighted()
-}
-
-function highlightPrev() {
-  if (searchResults.value.length === 0) return
-  highlightedIndex.value = (highlightedIndex.value - 1 + searchResults.value.length) % searchResults.value.length
-  scrollToHighlighted()
-}
+const searchResults = ref([])
+const searching = ref(false)
 
 function selectHighlighted() {
   if (barcodeBuffer.length > 2) return
-  if (searchResults.value.length === 0) return
-  if (highlightedIndex.value >= 0 && highlightedIndex.value < searchResults.value.length) {
-    addToCart(searchResults.value[highlightedIndex.value])
+  if (filteredProducts.value.length > 0) {
+    addToCart(filteredProducts.value[0])
+    searchQuery.value = ''
   }
-}
-
-function scrollToHighlighted() {
-  setTimeout(() => {
-    if (!resultsContainer.value) return
-    const container = resultsContainer.value
-    const items = container.querySelectorAll('.search-item')
-    if (items && items[highlightedIndex.value]) {
-      const activeItem = items[highlightedIndex.value]
-      const containerHeight = container.clientHeight
-      const itemHeight = activeItem.clientHeight
-      const itemTop = activeItem.offsetTop
-      
-      if (itemTop + itemHeight > container.scrollTop + containerHeight) {
-        container.scrollTop = itemTop + itemHeight - containerHeight
-      } else if (itemTop < container.scrollTop) {
-        container.scrollTop = itemTop
-      }
-    }
-  }, 0)
 }
 
 // ── Barcode USB HID scanner support ──────────────
@@ -158,19 +121,26 @@ function handleKeydown(e) {
   }
 }
 
-async function searchByBarcode(barcode) {
-  try {
-    const res = await axios.get(route('kasir.product.search'), { params: { q: barcode } })
-    if (res.data.length === 1) {
-      addToCart(res.data[0])
-      toast.success(`${res.data[0].name} ditambahkan`)
-    } else if (res.data.length > 1) {
-      searchQuery.value = barcode
-      searchResults.value = res.data
-    } else {
-      toast.warning('Barcode tidak ditemukan')
-    }
-  } catch (e) {}
+function searchByBarcode(barcode) {
+  const match = props.products.find(p => p.barcode === barcode || p.sku === barcode)
+  if (match) {
+    addToCart(match)
+    toast.success(`${match.name} ditambahkan`)
+  } else {
+    // Fallback to server search
+    axios.get(route('kasir.product.search'), { params: { q: barcode } })
+      .then(res => {
+        if (res.data.length === 1) {
+          addToCart(res.data[0])
+          toast.success(`${res.data[0].name} ditambahkan`)
+        } else {
+          toast.warning('Barcode tidak ditemukan')
+        }
+      })
+      .catch(() => {
+        toast.warning('Barcode tidak ditemukan')
+      })
+  }
 }
 
 onMounted(() => {
@@ -493,8 +463,13 @@ const notes         = ref('')
 const subtotal = computed(() => cart.value.reduce((s, i) => s + i.subtotal, 0))
 
 const discountAmount = computed(() => {
-  if (discountType.value === 'percent') return subtotal.value * (discountValue.value / 100)
-  return Math.min(discountValue.value, subtotal.value)
+  let val = parseFloat(discountValue.value) || 0
+  if (val < 0) val = 0
+  if (discountType.value === 'percent') {
+    val = Math.min(val, 100)
+    return subtotal.value * (val / 100)
+  }
+  return Math.min(val, subtotal.value)
 })
 
 const taxAmount = computed(() => (subtotal.value - discountAmount.value) * (taxPercent.value / 100))
@@ -668,6 +643,25 @@ watch(showReceiptModal, (isOpen) => {
 function formatCurrency(val) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val ?? 0)
 }
+
+// ── Barcode Renderer ──────────────────────────────
+function renderBarcode(el, value) {
+  if (!el || !value) return
+  try {
+    JsBarcode(el, value, {
+      format: 'CODE128',
+      width: 1.5,
+      height: 22,
+      displayValue: false,
+      margin: 0,
+      background: 'transparent',
+      lineColor: '#334155',
+    })
+  } catch (e) {
+    // Fallback: hide if barcode format invalid
+    el.style.display = 'none'
+  }
+}
 </script>
 
 <template>
@@ -676,7 +670,7 @@ function formatCurrency(val) {
 
     <div class="pos-layout no-print">
 
-      <!-- LEFT: Products Search + Cart -->
+      <!-- LEFT: Visual Catalog & Search -->
       <div class="pos-left">
 
         <!-- Search Bar -->
@@ -688,14 +682,12 @@ function formatCurrency(val) {
                 ref="searchInput"
                 v-model="searchQuery"
                 type="text"
-                placeholder="Cari produk (nama / SKU / barcode) atau scan barcode..."
+                placeholder="Cari nama produk, SKU, barcode, atau scan..."
                 class="pos-search"
                 autocomplete="off"
-                @keydown.down.prevent="highlightNext"
-                @keydown.up.prevent="highlightPrev"
                 @keydown.enter.prevent="selectHighlighted"
               />
-              <button v-if="searchQuery" @click="searchQuery = ''; searchResults = []" class="search-clear">
+              <button v-if="searchQuery" @click="searchQuery = ''" class="search-clear">
                 <X :size="16" />
               </button>
             </div>
@@ -711,93 +703,181 @@ function formatCurrency(val) {
               <span>Draf ({{ draftTransactions.length }})</span>
             </button>
           </div>
+        </div>
 
-          <!-- Search Results -->
-          <div v-if="searchResults.length > 0 || searching" ref="resultsContainer" class="search-results">
-            <div v-if="searching" class="search-loading">Mencari...</div>
-            <div
-              v-for="(product, idx) in searchResults"
-              :key="product.id"
-              class="search-item"
-              :class="{ 'search-item--highlighted': idx === highlightedIndex }"
-              @click="addToCart(product)"
-              @mouseenter="highlightedIndex = idx"
+        <!-- Catalog Container -->
+        <div class="catalog-container">
+          <!-- Category Tabs -->
+          <div class="category-tabs">
+            <button
+              type="button"
+              class="category-tab"
+              :class="{ 'category-tab--active': selectedCategory === null }"
+              @click="selectedCategory = null"
             >
-              <div class="search-item__info">
-                <span class="search-item__name">{{ product.name }}</span>
-                <span class="search-item__meta">{{ product.sku }} · Stok: {{ product.stock }} {{ product.unit }}</span>
-              </div>
-              <span class="search-item__price">{{ formatCurrency(product.sell_price) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Cart Items -->
-        <div class="cart-area">
-          <div v-if="cart.length === 0" class="cart-empty">
-            <ShoppingCart :size="48" />
-            <p>Keranjang kosong</p>
-            <p class="text-sm text-slate-400">Scan barcode atau cari produk di atas</p>
+              Semua Produk
+            </button>
+            <button
+              v-for="cat in categories"
+              :key="cat.id"
+              type="button"
+              class="category-tab"
+              :class="{ 'category-tab--active': selectedCategory === cat.id }"
+              @click="selectedCategory = cat.id"
+            >
+              {{ cat.name }}
+            </button>
           </div>
 
-          <div v-else class="cart-list">
-            <!-- Header -->
-            <div class="cart-header">
-              <span>Produk</span>
-              <span>Harga</span>
-              <span>Qty</span>
-              <span>Subtotal</span>
-              <span></span>
-            </div>
-
-            <!-- Items -->
-            <div v-for="(item, i) in cart" :key="item.product_id" class="cart-item">
-              <div class="cart-item__name">
-                <p class="font-medium text-slate-800">{{ item.name }}</p>
-                <p class="text-xs text-slate-400">{{ item.sku }}</p>
-              </div>
-              <span class="cart-item__price">{{ formatCurrency(item.price) }}</span>
-              <div class="cart-item__qty">
-                <button @click="updateQty(i, -1)" class="qty-btn"><Minus :size="12" /></button>
-                <input
-                  :value="item.qty"
-                  @change="setQty(i, $event.target.value)"
-                  type="number" min="1"
-                  class="qty-input"
-                />
-                <button @click="updateQty(i, 1)" class="qty-btn"><Plus :size="12" /></button>
-              </div>
-              <span class="cart-item__subtotal">{{ formatCurrency(item.subtotal) }}</span>
-              <button @click="removeFromCart(i)" class="cart-item__remove">
-                <Trash2 :size="14" />
-              </button>
+          <!-- Product Grid -->
+          <div v-if="filteredProducts.length === 0" class="flex flex-col items-center justify-center flex-1 py-16 text-slate-350 dark:text-slate-550 text-center gap-3 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700">
+            <Package :size="48" class="opacity-50" />
+            <div>
+              <p class="text-sm font-bold">Produk tidak ditemukan</p>
+              <p class="text-xs text-slate-400 mt-1">Coba sesuaikan kata kunci pencarian atau kategori Anda.</p>
             </div>
           </div>
-        </div>
 
-        <!-- Discount Row -->
-        <div v-if="cart.length > 0" class="discount-row">
-          <span class="text-sm font-medium text-slate-600">Diskon:</span>
-          <div class="discount-controls">
-            <select v-model="discountType" class="discount-type">
-              <option value="nominal">Rp</option>
-              <option value="percent">%</option>
-            </select>
-            <input
-              v-model="discountValue"
-              type="number" min="0"
-              :max="discountType === 'percent' ? 100 : subtotal"
-              class="discount-input"
-              placeholder="0"
-            />
+          <div v-else class="catalog-grid">
+            <div
+              v-for="product in filteredProducts"
+              :key="product.id"
+              class="product-card"
+              @click="addToCart(product)"
+            >
+              <!-- Card Image / Placeholder -->
+              <img
+                v-if="product.image"
+                :src="'/storage/' + product.image"
+                :alt="product.name"
+                class="product-card__image"
+              />
+              <div v-else class="product-card__image-placeholder">
+                <Package :size="24" />
+              </div>
+
+              <!-- Card Content -->
+              <div class="flex-1 flex flex-col gap-0.5">
+                <p class="product-card__name" :title="product.name">{{ product.name }}</p>
+                <p class="product-card__sku text-[10px] text-slate-400 font-mono">{{ product.sku || '-' }}</p>
+                <svg v-if="product.barcode" :ref="el => renderBarcode(el, product.barcode)" class="product-card__barcode"></svg>
+              </div>
+
+              <!-- Price & Stock -->
+              <div class="product-card__meta">
+                <span class="product-card__price">{{ formatCurrency(product.sell_price) }}</span>
+                <span
+                  class="product-card__stock text-[10px] font-bold"
+                  :class="product.stock <= 5 ? 'product-card__stock--warning' : 'product-card__stock--ok'"
+                >
+                  {{ product.stock }} {{ product.unit }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT: Summary + Pay -->
+      <!-- RIGHT: Summary, Cart List + Checkout -->
       <div class="pos-right">
+        
+        <!-- Cart Items Card -->
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-3.5 shadow-sm flex flex-col gap-3 flex-1 min-h-[80px] overflow-hidden">
+          <h4 class="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <ShoppingCart :size="16" class="text-indigo-500" />
+              Keranjang Belanja
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button
+                v-if="cart.length > 0"
+                @click="openSaveDraftModal"
+                type="button"
+                class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-500 rounded-lg transition"
+                title="Simpan Draf"
+              >
+                <FolderDown :size="14" />
+              </button>
+              <button
+                v-if="cart.length > 0"
+                @click="clearCart"
+                type="button"
+                class="p-1 hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-400 hover:text-red-500 rounded-lg transition"
+                title="Kosongkan Keranjang"
+              >
+                <Trash2 :size="14" />
+              </button>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-650 dark:text-slate-350">
+                {{ cart.reduce((sum, item) => sum + item.qty, 0) }} item
+              </span>
+            </div>
+          </h4>
+
+          <!-- Cart Area List -->
+          <div class="overflow-y-auto pr-1 flex-1 min-h-[60px]">
+            <div v-if="cart.length === 0" class="flex flex-col items-center justify-center py-8 text-slate-350 dark:text-slate-550 text-center gap-2">
+              <ShoppingCart :size="32" class="opacity-50" />
+              <p class="text-xs font-semibold">Keranjang masih kosong</p>
+              <p class="text-[10px] text-slate-400">Pilih produk di katalog atau scan barcode</p>
+            </div>
+
+            <div v-else class="space-y-3">
+              <div v-for="(item, i) in cart" :key="item.product_id" class="flex items-start justify-between gap-3 pb-3 border-b border-slate-50 dark:border-slate-750/30 last:border-0 last:pb-0">
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ item.name }}</p>
+                  <p class="text-[10px] text-slate-400 font-mono mt-0.5">{{ item.sku || '-' }}</p>
+                  <div class="flex items-center gap-1.5 mt-1.5">
+                    <span class="text-xxs font-extrabold text-slate-700 dark:text-slate-350">{{ formatCurrency(item.price) }}</span>
+                  </div>
+                </div>
+                
+                <div class="flex flex-col items-end gap-1.5 shrink-0">
+                  <!-- Qty Controls -->
+                  <div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-7 bg-white dark:bg-slate-900">
+                    <button type="button" @click="updateQty(i, -1)" class="w-7 h-full flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition text-slate-500">
+                      <Minus :size="10" />
+                    </button>
+                    <input
+                      :value="item.qty"
+                      @change="setQty(i, $event.target.value)"
+                      type="number" min="1"
+                      class="w-10 h-full text-center text-xs font-extrabold border-x border-slate-200 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-200 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button type="button" @click="updateQty(i, 1)" class="w-7 h-full flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition text-slate-500">
+                      <Plus :size="10" />
+                    </button>
+                  </div>
+                  <span class="text-xs font-extrabold text-slate-900 dark:text-white">{{ formatCurrency(item.subtotal) }}</span>
+                </div>
+
+                <button type="button" @click="removeFromCart(i)" class="p-1 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 rounded-lg transition shrink-0 mt-0.5">
+                  <Trash2 :size="13" />
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Discount Row inside Cart Card -->
+          <div v-if="cart.length > 0" class="pt-3 border-t border-slate-100 dark:border-slate-755/50 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">Diskon Transaksi:</span>
+            <div class="flex gap-1.5 items-center">
+              <select v-model="discountType" class="text-xs font-semibold px-1.5 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 outline-none">
+                <option value="nominal">Rp</option>
+                <option value="percent">%</option>
+              </select>
+              <input
+                v-model="discountValue"
+                type="number" min="0"
+                :max="discountType === 'percent' ? 100 : subtotal"
+                class="w-20 px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-right text-slate-800 dark:text-slate-200 outline-none"
+                placeholder="0"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- Customer Section Card -->
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3 shadow-sm flex flex-col gap-2 shrink-0">
           <h4 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
             <User :size="16" class="text-indigo-500" />
             Pelanggan / Member
@@ -805,8 +885,8 @@ function formatCurrency(val) {
           
           <!-- Selected Customer -->
           <div v-if="selectedCustomer" class="flex items-center justify-between p-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
-            <div>
-              <p class="font-bold text-slate-850 dark:text-slate-250 text-sm">{{ selectedCustomer.name }}</p>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-850 dark:text-slate-250 text-sm truncate">{{ selectedCustomer.name }}</p>
               <p class="text-[10px] text-slate-500 dark:text-slate-450 font-bold mt-0.5">
                 {{ selectedCustomer.phone || '-' }} · Poin: <span class="text-indigo-600 dark:text-indigo-400 font-extrabold">{{ selectedCustomer.points }}</span>
               </p>
@@ -854,7 +934,7 @@ function formatCurrency(val) {
           </div>
         </div>
 
-        <div class="summary-card">
+        <div class="summary-card shrink-0">
           <h3 class="summary-title">Ringkasan</h3>
 
           <div class="summary-rows">
@@ -892,11 +972,11 @@ function formatCurrency(val) {
           </div>
 
           <!-- Notes -->
-          <textarea
+          <input
             v-model="notes"
+            type="text"
             class="pos-notes"
             placeholder="Catatan (opsional)..."
-            rows="2"
           />
 
           <!-- Bayar Button -->
@@ -907,27 +987,6 @@ function formatCurrency(val) {
           >
             <Calculator :size="20" />
             Proses Pembayaran [F2]
-          </button>
-
-          <!-- Draft Button -->
-          <button
-            v-if="cart.length > 0"
-            class="save-draft-btn"
-            @click="openSaveDraftModal"
-            type="button"
-          >
-            <FolderDown :size="16" />
-            Simpan sebagai Draf
-          </button>
-
-          <!-- Clear cart -->
-          <button
-            v-if="cart.length > 0"
-            class="clear-btn"
-            @click="clearCart"
-          >
-            <Trash2 :size="14" />
-            Kosongkan Keranjang
           </button>
         </div>
       </div>
@@ -942,6 +1001,17 @@ function formatCurrency(val) {
             <button @click="showPaymentModal = false" class="modal__close"><X :size="16" /></button>
           </div>
           <div class="modal__body">
+            <!-- Item List -->
+            <div class="payment-items">
+              <h4 class="payment-items__title">Daftar Barang ({{ cart.length }} item)</h4>
+              <div class="payment-items__list">
+                <div v-for="(item, idx) in cart" :key="idx" class="payment-items__row">
+                  <span class="payment-items__name"><b>{{ item.qty }}×</b> {{ item.name }}</span>
+                  <span class="payment-items__subtotal">{{ formatCurrency(item.subtotal) }}</span>
+                </div>
+              </div>
+            </div>
+
             <div class="payment-total">
               <span>Total yang harus dibayar</span>
               <strong>{{ formatCurrency(total) }}</strong>
@@ -1305,16 +1375,18 @@ function formatCurrency(val) {
 </template>
 
 <style scoped>
-/* ── Layout ── */
+:global(.page-content) {
+  padding: 12px !important;
+}
 .pos-layout {
   display: grid;
   grid-template-columns: 1fr 340px;
   gap: 20px;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 88px);
   overflow: hidden;
 }
 @media (max-width: 1024px) {
-  .pos-layout { grid-template-columns: 1fr; height: auto; }
+  .pos-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
 }
 
 /* ── Left ── */
@@ -1325,15 +1397,243 @@ function formatCurrency(val) {
   overflow: hidden;
 }
 
+/* Catalog Container */
+.catalog-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Category Tabs */
+.category-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  flex-shrink: 0;
+}
+.category-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.category-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.dark .category-tabs::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.category-tab {
+  padding: 6px 12px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.dark .category-tab {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #334155;
+}
+.category-tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.dark .category-tab:hover {
+  background: #334155;
+  color: #f1f5f9;
+}
+.category-tab--active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+.dark .category-tab--active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+.category-tab--active:hover {
+  background: #1d4ed8;
+  color: white;
+}
+.dark .category-tab--active:hover {
+  background: #2563eb;
+  color: white;
+}
+
+/* Catalog Grid */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-auto-rows: max-content;
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px;
+  scrollbar-width: thin;
+}
+.catalog-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Product Card */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.dark .product-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #3b82f6;
+}
+.dark .product-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+.product-card:active {
+  transform: translateY(0);
+}
+
+.product-card__image {
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #f8fafc;
+}
+.dark .product-card__image {
+  background: #0f172a;
+}
+
+.product-card__image-placeholder {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #94a3b8;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.dark .product-card__image-placeholder {
+  background: #0f172a;
+  color: #475569;
+}
+
+.product-card__name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 1.85rem;
+}
+.dark .product-card__name {
+  color: #f1f5f9;
+}
+
+.product-card__sku {
+  font-size: 0.65rem;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+.dark .product-card__sku {
+  color: #94a3b8;
+}
+
+.product-card__barcode {
+  width: 80px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 3px;
+}
+
+.product-card__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+.dark .product-card__meta {
+  border-color: #334155;
+}
+
+.product-card__price {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #2563eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark .product-card__price {
+  color: #60a5fa;
+}
+
+.product-card__stock {
+  align-self: flex-start;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.product-card__stock--ok {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+.dark .product-card__stock--ok {
+  background: #052e16;
+  color: #4ade80;
+}
+.product-card__stock--warning {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.dark .product-card__stock--warning {
+  background: #450a0a;
+  color: #f87171;
+}
+
 /* Search */
 .search-area { position: relative; flex-shrink: 0; }
 .search-wrap { position: relative; }
 .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
 .search-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; }
 .pos-search {
-  width: 100%; padding: 14px 40px 14px 46px;
-  border: 2px solid #e2e8f0; border-radius: 12px;
-  font-size: 0.95rem; background: white;
+  width: 100%; padding: 8px 32px 8px 38px;
+  border: 2px solid #e2e8f0; border-radius: 10px;
+  font-size: 0.85rem; background: white;
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
 }
@@ -1431,11 +1731,21 @@ function formatCurrency(val) {
 .discount-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
 
 /* ── Right ── */
-.pos-right { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 80px; height: fit-content; }
+.pos-right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+@media (max-width: 1024px) {
+  .pos-right { height: auto; overflow: visible; }
+}
 .summary-card {
-  background: white; border-radius: 14px; padding: 20px;
+  background: white; border-radius: 14px; padding: 10px;
   border: 1px solid #f1f5f9;
-  display: flex; flex-direction: column; gap: 14px;
+  display: flex; flex-direction: column; gap: 8px;
 }
 .summary-title { font-size: 0.9rem; font-weight: 700; color: #0f172a; }
 .summary-rows { display: flex; flex-direction: column; gap: 6px; }
@@ -1462,8 +1772,8 @@ function formatCurrency(val) {
 
 /* Notes */
 .pos-notes {
-  width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0;
-  border-radius: 8px; font-size: 0.85rem; resize: none; outline: none;
+  width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0;
+  border-radius: 8px; font-size: 0.85rem; outline: none;
   font-family: inherit;
 }
 .pos-notes:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
@@ -1490,7 +1800,61 @@ function formatCurrency(val) {
 .clear-btn:hover { background: #fff1f2; }
 
 /* ── Payment Modal ── */
-.payment-modal { max-width: 400px; }
+.payment-modal { max-width: 440px; }
+
+.payment-items {
+  margin-bottom: 12px;
+}
+.payment-items__title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.payment-items__list {
+  max-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  background: #fafbfd;
+}
+.payment-items__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 8px;
+}
+.payment-items__row:last-child {
+  border-bottom: none;
+}
+.payment-items__name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+.payment-items__name b {
+  font-weight: 800;
+  color: #1e293b;
+  margin-right: 2px;
+}
+.payment-items__subtotal {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 .payment-total {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 16px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px;
@@ -1575,6 +1939,9 @@ function formatCurrency(val) {
 
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 
+</style>
+
+<style>
 /* Print styles */
 @media print {
   @page {
@@ -1587,42 +1954,31 @@ function formatCurrency(val) {
     margin: 0 !important;
     padding: 0 !important;
   }
-  .no-print, .modal__footer, .modal__header, aside, nav, header, .sidebar, .navbar {
+  /* Hide unnecessary modal elements and elements marked with no-print */
+  .no-print, .modal__footer, .modal__header {
     display: none !important;
   }
-  .app-shell, .main-content, .page-content {
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: 0 !important;
-    height: auto !important;
-    width: 100% !important;
-    display: block !important;
-    background: transparent !important;
-  }
+  /* Ensure modal overlay containing the receipt is visible but transparent */
   .modal-overlay {
     position: static !important;
-    display: block !important;
-    background: none !important;
-    backdrop-filter: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    box-shadow: none !important;
-  }
-  .modal {
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    max-height: none !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
     background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  /* Show only receipt */
+  .receipt-modal {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
     border: none !important;
   }
   .receipt {
     font-family: 'Courier New', Courier, monospace !important;
-    padding: 2mm 3mm !important;
+    padding: 0 !important;
     margin: 0 !important;
     background: transparent !important;
     box-sizing: border-box !important;
@@ -1643,6 +1999,9 @@ function formatCurrency(val) {
     letter-spacing: -1px;
   }
 }
+</style>
+
+<style scoped>
 
 .save-draft-btn {
   width: 100%; padding: 10px;
@@ -1656,11 +2015,11 @@ function formatCurrency(val) {
 .save-draft-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .draft-list-trigger {
-  height: 48px; padding: 0 16px;
+  height: 38px; padding: 0 12px;
   background: #eff6ff; color: #2563eb;
-  border: 1px solid #bfdbfe; border-radius: 12px;
-  font-weight: 600; font-size: 0.85rem; cursor: pointer;
-  display: flex; align-items: center; gap: 8px;
+  border: 1px solid #bfdbfe; border-radius: 10px;
+  font-weight: 600; font-size: 0.8rem; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
   transition: all 0.15s; white-space: nowrap;
 }
 .draft-list-trigger:hover { background: #dbeafe; }

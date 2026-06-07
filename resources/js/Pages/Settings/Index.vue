@@ -5,7 +5,8 @@ import { useForm, usePage } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
 import { 
   Store, MapPin, Phone, Mail, Percent, AlertCircle,
-  FileText, Upload, Image, Trash2, ShieldCheck, ToggleLeft, ToggleRight
+  FileText, Upload, Image, Trash2, ShieldCheck, ToggleLeft, ToggleRight,
+  Database, Download
 } from '@lucide/vue'
 
 const props = defineProps({
@@ -128,6 +129,17 @@ const saveSettings = () => {
             <Percent class="w-4.5 h-4.5" />
             <span>Pajak & Alarm</span>
           </button>
+
+          <button 
+            @click="activeTab = 'backup'"
+            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition duration-150 border"
+            :class="activeTab === 'backup'
+              ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/10'
+              : 'bg-white border-slate-100 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-750 dark:text-slate-300 dark:hover:bg-slate-700/50'"
+          >
+            <Database class="w-4.5 h-4.5" />
+            <span>Backup Data</span>
+          </button>
         </div>
 
         <!-- Form Panels -->
@@ -167,6 +179,25 @@ const saveSettings = () => {
                 </button>
                 <p class="text-xxs text-slate-405 dark:text-slate-500">Format gambar JPG, PNG, atau WEBP. Maksimum 2MB.</p>
               </div>
+            </div>
+          </div>
+
+          <!-- BACKUP DATA PANEL -->
+          <div v-show="activeTab === 'backup'" class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-sm space-y-4">
+            <h3 class="text-sm font-extrabold text-slate-850 dark:text-white uppercase tracking-wider">Pencadangan Data (Backup)</h3>
+            
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Unduh salinan cadangan (backup) seluruh database Anda yang mencakup daftar produk, kategori, data pelanggan, riwayat transaksi, pengaturan, dan log aktivitas. Simpan file ini di tempat yang aman untuk mengantisipasi kehilangan data.
+            </p>
+
+            <div class="pt-2 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <a 
+                :href="route('settings.backup')" 
+                class="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-lg shadow-emerald-650/15 cursor-pointer active:scale-95"
+              >
+                <Download class="w-4 h-4" />
+                <span>Download Backup Database (SQL)</span>
+              </a>
             </div>
           </div>
 

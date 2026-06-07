@@ -19,7 +19,16 @@ class KasirController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Kasir/Index');
+        $products = Product::where('is_active', true)
+            ->with('category:id,name')
+            ->get(['id', 'name', 'sku', 'barcode', 'sell_price', 'stock', 'unit', 'category_id', 'image']);
+
+        $categories = \App\Models\Category::all(['id', 'name']);
+
+        return Inertia::render('Kasir/Index', [
+            'products'   => $products,
+            'categories' => $categories,
+        ]);
     }
 
     public function searchProduct(Request $request): JsonResponse
@@ -56,13 +65,18 @@ class KasirController extends Controller
             'customer_id'    => 'nullable|exists:customers,id',
         ]);
         // Backend verification for product activity status and stock sufficiency
-        foreach ($data['items'] as $item) {
+        foreach ($data['items'] as $index => $item) {
             $product = Product::find($item['product_id']);
             if (!$product->is_active) {
                 return back()->with('error', "Produk '{$product->name}' sudah tidak aktif.");
             }
             if ($product->stock < $item['qty']) {
                 return back()->with('error', "Stok untuk produk '{$product->name}' tidak mencukupi (Tersedia: {$product->stock}).");
+            }
+            // Validasi diskon per item tidak boleh melebihi harga total item
+            $maxItemDiscount = $item['price'] * $item['qty'];
+            if (($item['discount'] ?? 0) > $maxItemDiscount) {
+                return back()->with('error', "Diskon untuk produk '{$product->name}' tidak boleh melebihi harga totalnya (Rp " . number_format($maxItemDiscount, 0, ',', '.') . ").");
             }
         }
 
@@ -73,7 +87,7 @@ class KasirController extends Controller
                 $subtotal += $itemSubtotal;
             }
 
-            $discount = $data['discount'] ?? 0;
+            $discount = min(max(0, $data['discount'] ?? 0), $subtotal);
             $tax      = $data['tax'] ?? 0;
             $total    = $subtotal - $discount + $tax;
             $change   = $data['paid_amount'] - $total;

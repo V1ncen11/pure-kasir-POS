@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/avatar', [ProfileController::class, 'uploadAvatar'])->name('profile.avatar');
 
     // Dashboard (semua role, tapi konten berbeda)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -105,6 +106,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Suppliers
         Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->except(['create', 'show', 'edit']);
 
+        // Satuan
+        Route::resource('satuan', \App\Http\Controllers\UnitController::class)->except(['create', 'show', 'edit']);
+
+
         // Purchases (Stok Masuk)
         Route::resource('purchases', \App\Http\Controllers\PurchaseController::class)->only(['index', 'create', 'store', 'show']);
 
@@ -112,6 +117,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
         Route::post('/pengaturan/logo', [SettingController::class, 'uploadLogo'])->name('settings.logo');
+        Route::get('/pengaturan/backup', [SettingController::class, 'backup'])->name('settings.backup');
 
         // Log Aktivitas
         Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])->name('activity-logs.index');

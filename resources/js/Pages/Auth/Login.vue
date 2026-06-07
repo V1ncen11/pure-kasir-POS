@@ -1,6 +1,8 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { useToast } from 'vue-toastification';
+import { watch } from 'vue';
 
 defineProps({
     canResetPassword: {
@@ -9,7 +11,19 @@ defineProps({
     status: {
         type: String,
     },
+    sessionKicked: {
+        type: Boolean,
+        default: false,
+    },
 });
+
+const page = usePage();
+const toast = useToast();
+
+watch(() => page.props.flash, (flash) => {
+    if (flash?.success) toast.success(flash.success);
+    if (flash?.error) toast.error(flash.error);
+}, { immediate: true, deep: true });
 
 const form = useForm({
     email: '',
@@ -113,6 +127,17 @@ const submit = () => {
                 <!-- Session status message -->
                 <div v-if="status" class="mt-4 mb-2 p-3.5 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-medium text-emerald-800">
                     {{ status }}
+                </div>
+
+                <!-- Session kicked warning -->
+                <div v-if="sessionKicked" class="mt-4 mb-2 p-3.5 rounded-xl border border-amber-300 bg-amber-50 flex items-start gap-2.5">
+                    <svg class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div>
+                        <p class="text-xs font-bold text-amber-800">Sesi Anda Telah Diakhiri</p>
+                        <p class="text-xs text-amber-700 mt-0.5">Akun ini diakses dari perangkat lain. Silakan masuk kembali.</p>
+                    </div>
                 </div>
 
                 <!-- Main Form -->

@@ -116,35 +116,59 @@ class ReportController extends Controller
             ->latest()
             ->get();
 
-        $filename = 'laporan-penjualan-' . $dateFrom->format('Ymd') . '-' . $dateTo->format('Ymd') . '.csv';
+        $filename = 'laporan-penjualan-' . $dateFrom->format('Ymd') . '-' . $dateTo->format('Ymd') . '.xls';
 
-        $headers = [
-            'Content-Type'        => 'text/csv',
+        // Hitung ringkasan
+        $totalRevenue = $transactions->sum('total');
+        $totalDiscount = $transactions->sum('discount');
+        $totalTax = $transactions->sum('tax');
+        $totalTransactions = $transactions->count();
+
+        \App\Models\ActivityLog::log('Export Laporan', "Export laporan penjualan: {$dateFrom->format('d/m/Y')} - {$dateTo->format('d/m/Y')} ({$totalTransactions} transaksi)");
+
+        $html  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $html .= '<?mso-application progid="Excel.Sheet"?>' . "\n";
+        $html .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
+        $html .= ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+        $html .= '<Worksheet ss:Name="Laporan Penjualan">';
+        $html .= '<Table>';
+
+        // Title row
+        $html .= '<Row><Cell ss:MergeAcross="10"><Data ss:Type="String">LAPORAN PENJUALAN - ' . strtoupper($dateFrom->format('d M Y')) . ' s/d ' . strtoupper($dateTo->format('d M Y')) . '</Data></Cell></Row>';
+        $html .= '<Row><Cell ss:MergeAcross="10"><Data ss:Type="String">Total Transaksi: ' . $totalTransactions . ' | Total Omset: Rp ' . number_format($totalRevenue, 0, ',', '.') . ' | Total Diskon: Rp ' . number_format($totalDiscount, 0, ',', '.') . '</Data></Cell></Row>';
+        $html .= '<Row></Row>';
+
+        // Header row
+        $headers_row = ['No', 'No. Invoice', 'Tanggal', 'Kasir', 'Jumlah Item', 'Subtotal (Rp)', 'Diskon (Rp)', 'Pajak (Rp)', 'Total (Rp)', 'Dibayar (Rp)', 'Metode Bayar'];
+        $html .= '<Row>';
+        foreach ($headers_row as $h) {
+            $html .= '<Cell><Data ss:Type="String">' . htmlspecialchars($h) . '</Data></Cell>';
+        }
+        $html .= '</Row>';
+
+        // Data rows
+        $no = 1;
+        foreach ($transactions as $t) {
+            $html .= '<Row>';
+            $html .= '<Cell><Data ss:Type="Number">' . $no++ . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="String">' . htmlspecialchars($t->invoice_number) . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="String">' . $t->created_at->format('d/m/Y H:i') . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="String">' . htmlspecialchars($t->cashier->name) . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="Number">' . $t->items->count() . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="Number">' . $t->subtotal . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="Number">' . $t->discount . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="Number">' . $t->tax . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="Number">' . $t->total . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="Number">' . $t->paid_amount . '</Data></Cell>';
+            $html .= '<Cell><Data ss:Type="String">' . strtoupper($t->payment_method) . '</Data></Cell>';
+            $html .= '</Row>';
+        }
+
+        $html .= '</Table></Worksheet></Workbook>';
+
+        return response($html, 200, [
+            'Content-Type'        => 'application/vnd.ms-excel',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
-
-        $callback = function () use ($transactions) {
-            $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // BOM UTF-8
-            fputcsv($handle, ['Invoice', 'Tanggal', 'Kasir', 'Item', 'Subtotal', 'Diskon', 'Pajak', 'Total', 'Bayar', 'Kembali', 'Metode']);
-            foreach ($transactions as $t) {
-                fputcsv($handle, [
-                    $t->invoice_number,
-                    $t->created_at->format('d/m/Y H:i'),
-                    $t->cashier->name,
-                    $t->items->count(),
-                    $t->subtotal,
-                    $t->discount,
-                    $t->tax,
-                    $t->total,
-                    $t->paid_amount,
-                    $t->change_amount,
-                    $t->payment_method,
-                ]);
-            }
-            fclose($handle);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        ]);
     }
 }

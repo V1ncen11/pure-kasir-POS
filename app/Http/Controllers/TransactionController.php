@@ -51,6 +51,11 @@ class TransactionController extends Controller
 
     public function show(Transaction $transaction): Response
     {
+        // Kasir hanya boleh akses transaksi miliknya sendiri
+        if (auth()->user()->role === 'kasir' && $transaction->cashier_id !== auth()->id()) {
+            abort(403, 'Anda tidak memiliki akses ke transaksi ini.');
+        }
+
         $transaction->load(['cashier:id,name', 'items.product:id,name,sku', 'customer']);
 
         return Inertia::render('Transactions/Show', [
@@ -87,8 +92,15 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function void(Transaction $transaction): RedirectResponse
+    public function void(Request $request, Transaction $transaction): RedirectResponse
     {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ], [
+            'password.required' => 'Kata sandi wajib diisi untuk konfirmasi.',
+            'password.current_password' => 'Kata sandi yang Anda masukkan salah.',
+        ]);
+
         if ($transaction->status === 'voided') {
             return back()->with('error', 'Transaksi sudah di-void sebelumnya.');
         }

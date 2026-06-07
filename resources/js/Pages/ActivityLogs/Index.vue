@@ -1,8 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { router, usePage } from '@inertiajs/vue3'
-import { useToast } from 'vue-toastification'
+import { router } from '@inertiajs/vue3'
 import {
   History, Search, Filter, X, User,
   ShoppingCart, Package, Tag, Truck, ArrowDownToLine,
@@ -14,14 +13,6 @@ const props = defineProps({
   users:   Array,
   filters: Object,
 })
-
-const toast   = useToast()
-const page    = usePage()
-
-watch(() => page.props.flash, (flash) => {
-  if (flash?.success) toast.success(flash.success)
-  if (flash?.error)   toast.error(flash.error)
-}, { immediate: true })
 
 // Filters
 const search    = ref(props.filters?.search ?? '')
