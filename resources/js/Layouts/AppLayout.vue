@@ -194,16 +194,14 @@ function isActive(routeName) {
     >
       <!-- Logo / Store Name -->
       <div class="sidebar__header">
-        <div class="sidebar__logo" :style="settings?.store_logo ? 'background: #ffffff; padding: 2px;' : ''">
-          <img v-if="settings?.store_logo" :src="`/storage/${settings.store_logo}`" :alt="storeName" class="w-full h-full object-contain rounded-lg" />
+        <div class="sidebar__logo" :style="settings?.store_logo ? 'background: transparent; width: 48px; height: 48px; min-width: 48px;' : ''">
+          <img v-if="settings?.store_logo" :src="`/storage/${settings.store_logo}`" :alt="storeName" class="w-full h-full object-contain" />
           <Store v-else :size="22" />
         </div>
         <Transition name="fade-slide">
           <div v-if="sidebarOpen" class="sidebar__brand">
-            <span class="sidebar__brand-name" style="font-weight: 800;">
-              <span class="text-blue-900">{{ formattedStoreName.first }}</span>
-              <span class="text-blue-600 ml-1">{{ formattedStoreName.middle }}</span>
-              <span class="text-sky-500 ml-1" v-if="formattedStoreName.last">{{ formattedStoreName.last }}</span>
+            <span class="sidebar__brand-name" style="font-weight: 800; color: #1e3a8a; font-size: 0.95rem;">
+              {{ storeName }}
             </span>
           </div>
         </Transition>

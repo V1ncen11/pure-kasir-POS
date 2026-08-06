@@ -39,7 +39,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Masuk - Toko Amir Udin" />
+    <Head title="Masuk - Warung Teh Ucu" />
 
     <div class="min-h-screen w-full flex bg-[#f1f6fb] text-slate-800 overflow-x-hidden font-sans">
         
@@ -64,12 +64,10 @@ const submit = () => {
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-extrabold tracking-tight leading-tight">
-                        <span class="text-white">Toko</span>
-                        <span class="text-sky-300 ml-1.5">Amir</span>
-                        <span class="text-cyan-400 ml-1.5">Udin</span>
+                    <h1 class="text-lg font-extrabold tracking-tight leading-tight text-white">
+                        Warung Teh Ucu
                     </h1>
-                    <p class="text-[10px] font-semibold text-blue-200 tracking-widest uppercase leading-none">Aplikasi Kasir Pintar</p>
+                    <p class="text-[10px] font-semibold text-blue-200 tracking-widest uppercase leading-none mt-1">Aplikasi Kasir Pintar</p>
                 </div>
             </div>
 
@@ -103,12 +101,12 @@ const submit = () => {
 
             <!-- Mobile Brand Header (Visible only on lg:hidden) -->
             <div class="absolute top-6 left-6 flex items-center space-x-2.5 lg:hidden z-10">
-                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 p-2 shadow-sm">
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 p-2 shadow-sm">
                     <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
                     </svg>
                 </div>
-                <span class="text-base font-bold text-blue-900 tracking-tight">Kasir POS</span>
+                <span class="text-base font-bold text-blue-900 tracking-tight">Warung Teh Ucu</span>
             </div>
 
             <!-- Login Card -->
@@ -236,7 +234,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="w-full bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-700 hover:to-sky-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed group/btn"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center space-x-2 text-xs uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed group/btn"
                     >
                         <!-- Spinner Icon (Visible when loading) -->
                         <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
