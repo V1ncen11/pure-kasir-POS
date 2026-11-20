@@ -3,7 +3,8 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
 import { Save, ArrowLeft, Upload, X } from '@lucide/vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import FormSelect from '@/Components/FormSelect.vue'
 
 const props = defineProps({
   product:    Object,
@@ -19,7 +20,7 @@ const form = useForm({
   sku:         props.product?.sku ?? '',
   barcode:     props.product?.barcode ?? '',
   category_id: props.product?.category_id ?? '',
-  unit:        props.product?.unit ?? 'pcs',
+  unit:        props.product?.unit ?? '',
   buy_price:   props.product?.buy_price ?? 0,
   sell_price:  props.product?.sell_price ?? 0,
   stock:       props.product?.stock ?? 0,
@@ -31,6 +32,22 @@ const form = useForm({
 
 const imagePreview = ref(props.product?.image ? `/storage/${props.product.image}` : null)
 
+const displayBuyPrice = computed({
+  get: () => new Intl.NumberFormat('id-ID').format(form.buy_price),
+  set: (val) => {
+    const num = parseInt(val.replace(/\D/g, '')) || 0
+    form.buy_price = num
+  }
+})
+
+const displaySellPrice = computed({
+  get: () => new Intl.NumberFormat('id-ID').format(form.sell_price),
+  set: (val) => {
+    const num = parseInt(val.replace(/\D/g, '')) || 0
+    form.sell_price = num
+  }
+})
+
 function handleImage(e) {
   const file = e.target.files[0]
   if (!file) return
@@ -41,6 +58,19 @@ function handleImage(e) {
 function clearImage() {
   form.image = null
   imagePreview.value = null
+}
+
+function allowNumericPriceInput(event) {
+  if (event.data && !/^[\d.,\s]+$/.test(event.data)) {
+    event.preventDefault()
+  }
+}
+
+function allowNumericPricePaste(event) {
+  const pasted = event.clipboardData?.getData('text') ?? ''
+  if (!/^[\d.,\s]+$/.test(pasted)) {
+    event.preventDefault()
+  }
 }
 
 
@@ -107,16 +137,16 @@ function submit() {
             <div class="grid-2">
               <div>
                 <label class="label">Kategori</label>
-                <select v-model="form.category_id" class="input">
-                  <option value="">— Pilih Kategori —</option>
-                  <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                </select>
+                <FormSelect
+                  v-model="form.category_id"
+                  :options="categories.map((cat) => ({ value: cat.id, label: cat.name }))"
+                  placeholder="— Pilih Kategori —"
+                />
               </div>
               <div>
                 <label class="label">Satuan <span class="text-rose-500">*</span></label>
-                <select v-model="form.unit" class="input">
-                  <option v-for="u in units" :key="u" :value="u">{{ u }}</option>
-                </select>
+                <FormSelect v-model="form.unit" :options="units" placeholder="— Pilih Satuan —" />
+                <p v-if="form.errors.unit" class="error-msg">{{ form.errors.unit }}</p>
               </div>
             </div>
             <div>
@@ -137,7 +167,18 @@ function submit() {
                 <label class="label">Harga Beli (HPP)</label>
                 <div class="input-prefix">
                   <span>Rp</span>
-                  <input v-model="form.buy_price" type="number" min="0" class="input" :class="{ 'input-error': form.errors.buy_price }" />
+                  <input
+                    v-model="displayBuyPrice"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9., ]*"
+                    autocomplete="off"
+                    class="input"
+                    :class="{ 'input-error': form.errors.buy_price }"
+                    @beforeinput="allowNumericPriceInput"
+                    @paste="allowNumericPricePaste"
+                    @drop.prevent
+                  />
                 </div>
                 <p v-if="form.errors.buy_price" class="error-msg">{{ form.errors.buy_price }}</p>
               </div>
@@ -145,7 +186,18 @@ function submit() {
                 <label class="label">Harga Jual <span class="text-rose-500">*</span></label>
                 <div class="input-prefix">
                   <span>Rp</span>
-                  <input v-model="form.sell_price" type="number" min="0" class="input" :class="{ 'input-error': form.errors.sell_price }" />
+                  <input
+                    v-model="displaySellPrice"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9., ]*"
+                    autocomplete="off"
+                    class="input"
+                    :class="{ 'input-error': form.errors.sell_price }"
+                    @beforeinput="allowNumericPriceInput"
+                    @paste="allowNumericPricePaste"
+                    @drop.prevent
+                  />
                 </div>
                 <p v-if="form.errors.sell_price" class="error-msg">{{ form.errors.sell_price }}</p>
               </div>
@@ -258,7 +310,7 @@ function submit() {
   background: white;
   transition: box-shadow 0.15s;
 }
-.input-prefix:focus-within { box-shadow: 0 0 0 2px #3b82f6; border-color: transparent; }
+.input-prefix:focus-within { box-shadow: 0 0 0 2px #526d8a; border-color: transparent; }
 .input-prefix > span {
   padding: 0 12px; background: #f8fafc; color: #64748b;
   font-size: 0.85rem; height: 100%;
@@ -291,7 +343,7 @@ function submit() {
   gap: 8px; padding: 32px; border: 2px dashed #e2e8f0; border-radius: 10px;
   cursor: pointer; transition: all 0.15s;
 }
-.image-upload:hover { border-color: #3b82f6; background: #f8fafc; }
+.image-upload:hover { border-color: #526d8a; background: #f8fafc; }
 
 /* Toggle */
 .toggle {
@@ -299,7 +351,7 @@ function submit() {
   background: #e2e8f0; cursor: pointer; position: relative;
   transition: background 0.2s;
 }
-.toggle--on { background: #2563eb; }
+.toggle--on { background: #526d8a; }
 .toggle-thumb {
   position: absolute; top: 2px; left: 2px;
   width: 20px; height: 20px; border-radius: 99px;

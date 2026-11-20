@@ -124,7 +124,7 @@ function submit() {
   cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #475569;
   transition: all 0.15s;
 }
-.type-option.active { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
+.type-option.active { border-color: #526d8a; background: #eff6ff; color: #526d8a; }
 
 .form-group { display: flex; flex-direction: column; }
 .error-msg { font-size: 0.75rem; color: #e11d48; margin-top: 4px; }

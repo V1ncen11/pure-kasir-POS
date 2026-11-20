@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { Link } from '@inertiajs/vue3'
-import { ArrowLeft, Printer, AlertTriangle, CheckCircle2, RotateCcw, Wallet, Banknote, CreditCard } from '@lucide/vue'
+import { ArrowLeft, Printer, AlertTriangle, CheckCircle2, RotateCcw, Wallet, Banknote, CreditCard, Globe } from '@lucide/vue'
 import { useToast } from 'vue-toastification'
 import { usePage } from '@inertiajs/vue3'
 
@@ -43,7 +43,7 @@ const printReceipt = () => {
 
         <button 
           @click="printReceipt"
-          class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-lg hover:shadow-indigo-500/20 active:shadow-none transition-all duration-200"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 active:bg-primary-800 rounded-xl shadow-lg hover:shadow-primary-500/20 active:shadow-none transition-all duration-200"
         >
           <Printer class="w-4 h-4" />
           <span>Cetak Struk</span>
@@ -106,7 +106,7 @@ const printReceipt = () => {
               <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300">
                 <Banknote v-if="transaction.payment_method === 'cash'" class="w-4 h-4 text-emerald-500" />
                 <CreditCard v-else-if="transaction.payment_method === 'transfer'" class="w-4 h-4 text-sky-500" />
-                <Wallet v-else class="w-4 h-4 text-indigo-500" />
+                <Wallet v-else class="w-4 h-4 text-primary-500" />
                 <span class="capitalize">{{ transaction.payment_method === 'cash' ? 'Tunai' : transaction.payment_method }}</span>
               </div>
             </div>
@@ -148,7 +148,7 @@ const printReceipt = () => {
                 <tr v-for="item in transaction.items" :key="item.id" class="text-sm text-slate-700 dark:text-slate-300">
                   <td class="py-4">
                     <div class="font-bold text-slate-900 dark:text-white">{{ item.product_name }}</div>
-                    <div class="text-xs text-slate-400 dark:text-slate-500 font-mono mt-0.5">SKU: {{ item.product_sku || '-' }}</div>
+                    <div class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">SKU: {{ item.product_sku || '-' }}</div>
                   </td>
                   <td class="py-4 text-right font-medium">{{ formatRupiah(item.price) }}</td>
                   <td class="py-4 text-center font-bold">{{ item.qty }}</td>
@@ -190,7 +190,7 @@ const printReceipt = () => {
 
             <div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-700 text-lg font-extrabold text-slate-900 dark:text-white">
               <span>Total Pembayaran</span>
-              <span class="text-2xl text-indigo-600 dark:text-indigo-400">{{ formatRupiah(transaction.total) }}</span>
+              <span class="text-2xl text-primary-600 dark:text-primary-400">{{ formatRupiah(transaction.total) }}</span>
             </div>
 
             <div class="flex justify-between items-center text-sm font-semibold text-slate-600 dark:text-slate-400 pt-3">
@@ -210,9 +210,10 @@ const printReceipt = () => {
 
     <!-- Thermal Print Layout (Hidden on Screen, visible only when printing) -->
     <Teleport to="body">
-      <div :class="['print-only-receipt', settings?.receipt_paper_width === '80mm' ? 'receipt-80mm' : 'receipt-58mm']">
-        <div class="receipt">
+      <div class="print-only-receipt">
+        <div :class="['receipt', settings?.receipt_paper_width === '80mm' ? 'receipt-80mm' : 'receipt-58mm']">
           <div class="receipt__header">
+            <img v-if="settings?.store_logo" :src="`/storage/${settings.store_logo}`" :alt="`Logo ${settings?.store_name ?? 'Toko'}`" class="receipt__logo" />
             <h2>{{ settings?.store_name ?? 'Toko' }}</h2>
             <p>{{ settings?.store_address }}</p>
             <p>{{ settings?.store_phone }}</p>
@@ -258,6 +259,16 @@ const printReceipt = () => {
           <div class="receipt__footer">
             <p>{{ settings?.receipt_header ?? 'Terima kasih!' }}</p>
             <p class="text-xs">{{ settings?.receipt_footer }}</p>
+            <div v-if="settings?.instagram || settings?.website" class="receipt__socials" :class="{ 'receipt__socials--single': !(settings?.instagram && settings?.website) }">
+              <p v-if="settings?.instagram" class="receipt__social">
+                <svg class="receipt__social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg>
+                <span>{{ settings.instagram }}</span>
+              </p>
+              <p v-if="settings?.website" class="receipt__social">
+                <Globe class="receipt__social-icon" aria-hidden="true" />
+                <span>{{ settings.website }}</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -286,9 +297,10 @@ const printReceipt = () => {
     display: none !important;
   }
   .print-only-receipt {
-    display: block !important;
+    display: flex !important;
+    justify-content: center !important;
     width: 100% !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
   }
   .receipt {
@@ -312,8 +324,23 @@ const printReceipt = () => {
     line-height: 1.4 !important;
   }
   .receipt__header { text-align: center; margin-bottom: 8px; }
+  .receipt__logo {
+    display: block;
+    width: 34mm;
+    height: 16mm;
+    object-fit: contain;
+    margin: 0 auto 4px;
+    filter: brightness(0);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   .receipt__header h2 { font-size: 1.15em; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; }
   .receipt__header p { font-size: 0.9em; color: #000; margin: 2px 0; }
+  .receipt__socials { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+  .receipt__socials--single { grid-template-columns: minmax(0, 1fr); }
+  .receipt__social { display: flex; align-items: flex-start; justify-content: center; gap: 3px; min-width: 0; overflow-wrap: anywhere; text-align: center; }
+  .receipt__social span { min-width: 0; overflow-wrap: anywhere; }
+  .receipt__social-icon { width: 12px; height: 12px; flex: 0 0 12px; }
   .receipt__divider { color: #000; margin: 8px 0; font-size: 0.9em; text-align: center; letter-spacing: -1px; }
   .receipt__meta-row, .receipt__total-row {
     display: flex; justify-content: space-between; gap: 8px;

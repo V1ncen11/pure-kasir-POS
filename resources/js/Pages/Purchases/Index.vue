@@ -58,7 +58,7 @@ const formatDate = (dateString) => {
               </td>
             </tr>
             <tr v-for="purchase in purchases.data" :key="purchase.id">
-              <td class="font-medium text-blue-600">{{ purchase.reference_no || '-' }}</td>
+              <td class="font-medium text-primary-600">{{ purchase.reference_no || '-' }}</td>
               <td>
                 <div class="flex items-center gap-2 text-gray-600">
                   <Clock :size="14" />
@@ -79,7 +79,7 @@ const formatDate = (dateString) => {
                 </div>
               </td>
               <td class="text-right">
-                <Link :href="route('purchases.show', purchase.id)" class="btn-icon text-blue-600 hover:bg-blue-50">
+                <Link :href="route('purchases.show', purchase.id)" class="btn-icon text-primary-600 hover:bg-primary-50">
                   <Eye :size="16" />
                 </Link>
               </td>
@@ -119,7 +119,7 @@ const formatDate = (dateString) => {
 .font-semibold { font-weight: 600; color: #0f172a; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
-.text-blue-600 { color: #2563eb; }
+.text-primary-600 { color: #526d8a; }
 .text-gray-500 { color: #64748b; }
 .text-gray-600 { color: #475569; }
 
@@ -132,15 +132,15 @@ const formatDate = (dateString) => {
 .badge-gray { background: #f1f5f9; color: #475569; }
 
 .btn-icon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; border: none; background: transparent; cursor: pointer; transition: 0.2s; text-decoration: none; }
-.hover\:bg-blue-50:hover { background: #eff6ff; }
+.hover\:bg-primary-50:hover { background: #eff6ff; }
 
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 0.875rem; cursor: pointer; border: none; transition: 0.2s; text-decoration: none; }
-.btn-primary { background: #2563eb; color: white; }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary { background: #526d8a; color: white; }
+.btn-primary:hover { background: #435a74; }
 
 .pagination { padding: 16px; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; }
 .page-link { padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; color: #475569; text-decoration: none; font-size: 0.875rem; transition: 0.2s; }
 .page-link:hover:not(.disabled) { background: #f8fafc; border-color: #cbd5e1; }
-.page-link-active { background: #eff6ff; border-color: #2563eb; color: #2563eb; font-weight: 500; }
+.page-link-active { background: #eff6ff; border-color: #526d8a; color: #526d8a; font-weight: 500; }
 .page-link.disabled { opacity: 0.5; cursor: not-allowed; background: #f8fafc; }
 </style>

@@ -94,11 +94,12 @@ const performVoid = () => {
 
 <template>
   <AppLayout title="Riwayat Transaksi">
+    <template #title>Riwayat Transaksi</template>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Riwayat Transaksi</h1>
+          <h1 class="text-3xl font-bold tracking-tight text-primary-800 dark:text-white">Riwayat Transaksi</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {{ isAdmin ? 'Kelola dan pantau seluruh transaksi penjualan toko.' : 'Daftar transaksi penjualan hari ini.' }}
           </p>
@@ -109,12 +110,12 @@ const performVoid = () => {
             @click="showFilters = !showFilters"
             class="flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-xl transition duration-200"
             :class="showFilters || date_from || date_to || payment || status 
-              ? 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900/50 dark:bg-indigo-950/30 dark:text-indigo-400' 
+              ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-300'
               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/50'"
           >
             <Filter class="w-4 h-4" />
             <span>Filter</span>
-            <span v-if="date_from || date_to || payment || status" class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400"></span>
+            <span v-if="date_from || date_to || payment || status" class="w-2 h-2 rounded-full bg-primary-600 dark:bg-primary-400"></span>
           </button>
           
           <button 
@@ -131,12 +132,12 @@ const performVoid = () => {
       <!-- Search and Filter Bar -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-4 space-y-4">
         <div class="relative">
-          <Search class="absolute left-4 top-3 h-5 w-5 text-slate-400" />
+          <Search class="absolute left-4 top-3 h-5 w-5 text-primary-600" />
           <input 
             v-model="search"
             type="text" 
             placeholder="Cari nomor invoice..."
-            class="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+            class="w-full pl-11 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
           />
         </div>
 
@@ -145,11 +146,11 @@ const performVoid = () => {
           <div>
             <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tanggal Mulai</label>
             <div class="relative">
-              <Calendar class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Calendar class="absolute left-3 top-2.5 h-4 w-4 text-primary-600" />
               <input 
                 v-model="date_from"
                 type="date"
-                class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
               />
             </div>
           </div>
@@ -157,11 +158,11 @@ const performVoid = () => {
           <div>
             <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tanggal Selesai</label>
             <div class="relative">
-              <Calendar class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Calendar class="absolute left-3 top-2.5 h-4 w-4 text-primary-600" />
               <input 
                 v-model="date_to"
                 type="date"
-                class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                class="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
               />
             </div>
           </div>
@@ -170,7 +171,7 @@ const performVoid = () => {
             <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Metode Pembayaran</label>
             <select 
               v-model="payment"
-              class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+              class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
             >
               <option value="">Semua Metode</option>
               <option value="cash">Tunai (Cash)</option>
@@ -183,7 +184,7 @@ const performVoid = () => {
             <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Status Transaksi</label>
             <select 
               v-model="status"
-              class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+              class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
             >
               <option value="">Semua Status</option>
               <option value="completed">Selesai</option>
@@ -217,7 +218,7 @@ const performVoid = () => {
               >
                 <!-- Invoice -->
                 <td class="py-4 px-6">
-                  <div class="font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                  <div class="font-semibold text-primary-700 dark:text-primary-300 flex items-center gap-1.5">
                     <FileText class="w-4 h-4 text-slate-400" />
                     <span>{{ t.invoice_number }}</span>
                   </div>
@@ -254,7 +255,7 @@ const performVoid = () => {
                     :class="{
                       'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400': t.payment_method === 'cash',
                       'bg-sky-50 text-sky-700 dark:bg-sky-950/20 dark:text-sky-400': t.payment_method === 'transfer',
-                      'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400': t.payment_method === 'qris'
+                      'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300': t.payment_method === 'qris'
                     }"
                   >
                     <Banknote v-if="t.payment_method === 'cash'" class="w-3.5 h-3.5" />
@@ -281,7 +282,7 @@ const performVoid = () => {
                   <div class="flex items-center justify-end gap-2">
                     <Link 
                       :href="route('transactions.show', t.id)"
-                      class="flex items-center justify-center p-2 text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200 dark:border-slate-700 hover:border-indigo-100 rounded-xl transition dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+                      class="flex items-center justify-center p-2 text-slate-500 hover:text-primary-700 bg-slate-50 hover:bg-primary-50 border border-slate-200 dark:border-slate-700 hover:border-primary-200 rounded-xl transition dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-primary-900/30 dark:hover:text-primary-300"
                       title="Lihat Detail struk"
                     >
                       <Eye class="w-4 h-4" />
@@ -335,7 +336,7 @@ const performVoid = () => {
                 :href="link.url"
                 class="px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-200"
                 :class="link.active 
-                  ? 'bg-indigo-600 border-indigo-600 text-white font-bold dark:bg-indigo-500 dark:border-indigo-500' 
+                  ? 'bg-primary-600 border-primary-600 text-white font-bold dark:bg-primary-600 dark:border-primary-600'
                   : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700'"
                 v-html="link.label"
               />

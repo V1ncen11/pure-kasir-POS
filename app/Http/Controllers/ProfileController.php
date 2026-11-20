@@ -32,13 +32,18 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
+        $emailChanged = $user->isDirty('email');
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($emailChanged) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+        if ($emailChanged) {
+            $user->sendEmailVerificationNotification();
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -73,6 +78,10 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        if ($user->transactions()->exists() || \App\Models\Purchase::where('user_id', $user->id)->exists()) {
+            return Redirect::route('profile.edit')->with('error', 'Akun dengan riwayat transaksi atau pembelian tidak dapat dihapus. Minta admin menonaktifkan akun.');
+        }
 
         Auth::logout();
 

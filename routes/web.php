@@ -118,6 +118,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
         Route::post('/pengaturan/logo', [SettingController::class, 'uploadLogo'])->name('settings.logo');
         Route::get('/pengaturan/backup', [SettingController::class, 'backup'])->name('settings.backup');
+        Route::get('/pengaturan/ekspor-data', [SettingController::class, 'exportData'])->name('settings.export-data');
 
         // Log Aktivitas
         Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])->name('activity-logs.index');

@@ -5,11 +5,12 @@ import { useForm, usePage } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
 import JsBarcode from 'jsbarcode'
+import { BrowserMultiFormatReader } from '@zxing/browser'
 import {
-  Search, ShoppingCart, Trash2, Plus, Minus, CreditCard,
+  Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Camera,
   Wallet, QrCode, Barcode, X, CheckCircle, Package,
   Calculator, Percent, FolderDown, FolderOpen, AlertTriangle,
-  Database, User
+  Database, User, Globe
 } from '@lucide/vue'
 
 const props = defineProps({
@@ -57,6 +58,73 @@ function selectHighlighted() {
 let barcodeBuffer = ''
 let barcodeTimer  = null
 
+// ── Optional camera barcode scanner ─────────────
+const showCameraScanner = ref(false)
+const cameraVideo = ref(null)
+const cameraError = ref('')
+const cameraReady = ref(false)
+let cameraStream = null
+let cameraControls = null
+let cameraSession = 0
+
+function stopCameraStream() {
+  cameraSession++
+  cameraControls?.stop()
+  cameraControls = null
+  cameraStream = cameraVideo.value?.srcObject || null
+  cameraStream?.getTracks().forEach(track => track.stop())
+  cameraStream = null
+  if (cameraVideo.value) {
+    cameraVideo.value.pause()
+    cameraVideo.value.srcObject = null
+  }
+  cameraReady.value = false
+}
+
+function closeCameraScanner() {
+  showCameraScanner.value = false
+  stopCameraStream()
+}
+
+async function openCameraScanner() {
+  showCameraScanner.value = true
+  cameraError.value = ''
+  cameraReady.value = false
+  const session = ++cameraSession
+  await nextTick()
+
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    cameraError.value = 'Akses kamera membutuhkan HTTPS atau alamat localhost. Buka aplikasi melalui koneksi aman lalu coba lagi.'
+    return
+  }
+  try {
+    const reader = new BrowserMultiFormatReader()
+    const controls = await reader.decodeFromVideoDevice(undefined, cameraVideo.value, (result) => {
+      const barcode = result?.getText()?.trim()
+      if (barcode && showCameraScanner.value && session === cameraSession) {
+        closeCameraScanner()
+        searchByBarcode(barcode)
+      }
+    })
+    if (!showCameraScanner.value || session !== cameraSession) {
+      controls.stop()
+      return
+    }
+    cameraControls = controls
+    cameraStream = cameraVideo.value?.srcObject || null
+    cameraReady.value = true
+  } catch (error) {
+    stopCameraStream()
+    if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+      cameraError.value = 'Izin kamera ditolak. Izinkan akses kamera dari ikon pengaturan situs di browser, lalu coba lagi.'
+    } else if (error.name === 'NotFoundError' || error.name === 'NotFoundException') {
+      cameraError.value = 'Kamera tidak ditemukan di perangkat ini.'
+    } else {
+      cameraError.value = 'Kamera tidak bisa dibuka. Pastikan tidak sedang dipakai aplikasi lain, lalu coba lagi.'
+    }
+  }
+}
+
 function handleKeydown(e) {
   // If success modal is open, intercept key events
   if (showSuccessModal.value) {
@@ -74,6 +142,10 @@ function handleKeydown(e) {
 
   // If user presses Escape, close modals
   if (e.key === 'Escape') {
+    if (showCameraScanner.value) {
+      closeCameraScanner()
+      return
+    }
     if (showPaymentModal.value) {
       showPaymentModal.value = false
       return
@@ -150,7 +222,10 @@ onMounted(() => {
     searchInput.value?.focus()
   }, 100)
 })
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  stopCameraStream()
+})
 
 // ── Cart ──────────────────────────────────────────
 const cart = ref([])
@@ -559,7 +634,7 @@ async function submitTransaction() {
   }
   processing.value = true
   try {
-    await axios.post(route('kasir.store'), {
+    const response = await axios.post(route('kasir.store'), {
       items: cart.value.map(i => ({
         product_id: i.product_id,
         qty:        i.qty,
@@ -575,17 +650,18 @@ async function submitTransaction() {
     })
 
     // Tampilkan struk
+    const saved = response.data.transaction
     lastTransaction.value = {
-      invoice: 'INV-' + Date.now(),
-      items:   [...cart.value],
-      subtotal: subtotal.value,
-      discount: discountAmount.value,
-      tax:      taxAmount.value,
-      total:    total.value,
-      paid:     paidAmount.value,
-      change:   change.value,
-      method:   paymentMethod.value,
-      time:     new Date().toLocaleString('id-ID'),
+      invoice: saved.invoice,
+      items:   saved.items,
+      subtotal: Number(saved.subtotal),
+      discount: Number(saved.discount),
+      tax:      Number(saved.tax),
+      total:    Number(saved.total),
+      paid:     Number(saved.paid),
+      change:   Number(saved.change),
+      method:   saved.method,
+      time:     new Date(saved.created_at).toLocaleString('id-ID'),
       customer: selectedCustomer.value ? { ...selectedCustomer.value } : null,
     }
     showPaymentModal.value = false
@@ -692,6 +768,16 @@ function renderBarcode(el, value) {
               </button>
             </div>
 
+            <button
+              type="button"
+              class="camera-scan-trigger"
+              @click="openCameraScanner"
+              title="Scan barcode dengan kamera"
+            >
+              <Camera :size="16" />
+              <span>Kamera</span>
+            </button>
+
             <!-- Draft Queue Button -->
             <button
               v-if="draftTransactions.length > 0"
@@ -759,7 +845,7 @@ function renderBarcode(el, value) {
               <!-- Card Content -->
               <div class="flex-1 flex flex-col gap-0.5">
                 <p class="product-card__name" :title="product.name">{{ product.name }}</p>
-                <p class="product-card__sku text-[10px] text-slate-400 font-mono">{{ product.sku || '-' }}</p>
+                <p class="product-card__sku text-[10px] text-slate-400">{{ product.sku || '-' }}</p>
                 <svg v-if="product.barcode" :ref="el => renderBarcode(el, product.barcode)" class="product-card__barcode"></svg>
               </div>
 
@@ -785,7 +871,7 @@ function renderBarcode(el, value) {
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-3.5 shadow-sm flex flex-col gap-3 flex-1 min-h-[80px] overflow-hidden">
           <h4 class="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center justify-between">
             <span class="flex items-center gap-2">
-              <ShoppingCart :size="16" class="text-indigo-500" />
+              <ShoppingCart :size="16" class="text-primary-500" />
               Keranjang Belanja
             </span>
             <div class="flex items-center gap-1.5">
@@ -793,7 +879,7 @@ function renderBarcode(el, value) {
                 v-if="cart.length > 0"
                 @click="openSaveDraftModal"
                 type="button"
-                class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-500 rounded-lg transition"
+                class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-primary-500 rounded-lg transition"
                 title="Simpan Draf"
               >
                 <FolderDown :size="14" />
@@ -825,7 +911,7 @@ function renderBarcode(el, value) {
               <div v-for="(item, i) in cart" :key="item.product_id" class="flex items-start justify-between gap-3 pb-3 border-b border-slate-50 dark:border-slate-750/30 last:border-0 last:pb-0">
                 <div class="flex-1 min-w-0">
                   <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ item.name }}</p>
-                  <p class="text-[10px] text-slate-400 font-mono mt-0.5">{{ item.sku || '-' }}</p>
+                  <p class="text-[10px] text-slate-400 mt-0.5">{{ item.sku || '-' }}</p>
                   <div class="flex items-center gap-1.5 mt-1.5">
                     <span class="text-xxs font-extrabold text-slate-700 dark:text-slate-350">{{ formatCurrency(item.price) }}</span>
                   </div>
@@ -879,16 +965,16 @@ function renderBarcode(el, value) {
         <!-- Customer Section Card -->
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3 shadow-sm flex flex-col gap-2 shrink-0">
           <h4 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
-            <User :size="16" class="text-indigo-500" />
+            <User :size="16" class="text-primary-500" />
             Pelanggan / Member
           </h4>
           
           <!-- Selected Customer -->
-          <div v-if="selectedCustomer" class="flex items-center justify-between p-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
+          <div v-if="selectedCustomer" class="flex items-center justify-between p-2.5 bg-primary-50/50 dark:bg-primary-900/20 rounded-xl border border-primary-100/50 dark:border-primary-900/30">
             <div class="min-w-0">
               <p class="font-bold text-slate-850 dark:text-slate-250 text-sm truncate">{{ selectedCustomer.name }}</p>
               <p class="text-[10px] text-slate-500 dark:text-slate-450 font-bold mt-0.5">
-                {{ selectedCustomer.phone || '-' }} · Poin: <span class="text-indigo-600 dark:text-indigo-400 font-extrabold">{{ selectedCustomer.points }}</span>
+                {{ selectedCustomer.phone || '-' }} · Poin: <span class="text-primary-600 dark:text-primary-400 font-extrabold">{{ selectedCustomer.points }}</span>
               </p>
             </div>
             <button @click="selectedCustomer = null" class="p-1 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 rounded-lg transition" type="button" title="Lepas Pelanggan">
@@ -902,7 +988,7 @@ function renderBarcode(el, value) {
               <input
                 v-model="customerSearchQuery"
                 type="text"
-                class="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                class="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 placeholder="Cari member (nama / HP)..."
                 @focus="showCustomerDropdown = true"
                 @blur="handleCustomerBlur"
@@ -926,7 +1012,7 @@ function renderBarcode(el, value) {
             
             <button
               @click="openAddCustomerModal"
-              class="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl border border-indigo-100 dark:border-indigo-900/30 transition flex items-center justify-center whitespace-nowrap"
+              class="px-3 py-2 bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 text-xs font-bold rounded-xl border border-primary-100 dark:border-primary-900/30 transition flex items-center justify-center whitespace-nowrap"
               type="button"
             >
               + Baru
@@ -1076,7 +1162,7 @@ function renderBarcode(el, value) {
           <div class="space-y-1.5">
             <h3 class="text-xl font-black text-slate-900 dark:text-white">Transaksi Berhasil!</h3>
             <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 tracking-wider uppercase">
-              No. Invoice: <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ lastTransaction?.invoice }}</span>
+              No. Invoice: <span class="text-primary-600 dark:text-primary-400 font-bold">{{ lastTransaction?.invoice }}</span>
             </p>
           </div>
 
@@ -1084,7 +1170,7 @@ function renderBarcode(el, value) {
           <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-2.5 text-left border border-slate-100 dark:border-slate-800 text-sm">
             <div v-if="lastTransaction?.customer" class="flex justify-between">
               <span class="text-slate-500">Member</span>
-              <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ lastTransaction.customer.name }}</span>
+              <span class="font-bold text-primary-600 dark:text-primary-400">{{ lastTransaction.customer.name }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-slate-500">Total Belanja</span>
@@ -1132,6 +1218,7 @@ function renderBarcode(el, value) {
           <div :class="['receipt', settings?.receipt_paper_width === '80mm' ? 'receipt-80mm' : 'receipt-58mm']" v-if="lastTransaction">
             <!-- Receipt content -->
             <div class="receipt__header">
+              <img v-if="settings?.store_logo" :src="`/storage/${settings.store_logo}`" :alt="`Logo ${settings?.store_name ?? 'Toko'}`" class="receipt__logo" />
               <h2>{{ settings?.store_name ?? 'Toko' }}</h2>
               <p>{{ settings?.store_address }}</p>
               <p>{{ settings?.store_phone }}</p>
@@ -1177,6 +1264,16 @@ function renderBarcode(el, value) {
             <div class="receipt__footer">
               <p>{{ settings?.receipt_header ?? 'Terima kasih!' }}</p>
               <p class="text-xs">{{ settings?.receipt_footer }}</p>
+              <div v-if="settings?.instagram || settings?.website" class="receipt__socials" :class="{ 'receipt__socials--single': !(settings?.instagram && settings?.website) }">
+                <p v-if="settings?.instagram" class="receipt__social">
+                  <svg class="receipt__social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg>
+                  <span>{{ settings.instagram }}</span>
+                </p>
+                <p v-if="settings?.website" class="receipt__social">
+                  <Globe class="receipt__social-icon" aria-hidden="true" />
+                  <span>{{ settings.website }}</span>
+                </p>
+              </div>
             </div>
           </div>
           <div class="modal__footer no-print">
@@ -1232,11 +1329,35 @@ function renderBarcode(el, value) {
             </div>
             <div class="modal__footer">
               <button type="button" @click="showAddCustomerModal = false" class="btn-secondary">Batal</button>
-              <button type="submit" class="btn-primary" :disabled="customerForm.processing" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
+              <button type="submit" class="btn-primary" :disabled="customerForm.processing" style="background: linear-gradient(135deg, #526d8a, #435a74); border: none;">
                 {{ customerForm.processing ? 'Menyimpan...' : 'Simpan Member' }}
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── Save Draft Modal ── -->
+    <Teleport to="body">
+      <div v-if="showCameraScanner" class="modal-overlay camera-scan-overlay" @click.self="closeCameraScanner">
+        <div class="modal camera-scan-modal" role="dialog" aria-modal="true" aria-labelledby="camera-scan-title">
+          <div class="modal__header">
+            <h3 id="camera-scan-title">Scan Barcode dengan Kamera</h3>
+            <button type="button" @click="closeCameraScanner" class="modal__close" aria-label="Tutup kamera"><X :size="16" /></button>
+          </div>
+          <div class="modal__body camera-scan-body">
+            <div v-if="!cameraError" class="camera-preview">
+              <video ref="cameraVideo" autoplay muted playsinline aria-label="Tampilan kamera untuk scan barcode"></video>
+              <div v-if="cameraReady" class="camera-scan-frame" aria-hidden="true"></div>
+              <div v-else class="camera-loading">Meminta akses kamera…</div>
+            </div>
+            <p v-if="cameraError" class="camera-scan-error" role="alert">{{ cameraError }}</p>
+            <p v-else class="camera-scan-hint">Arahkan barcode produk ke dalam bingkai. Produk akan otomatis masuk ke keranjang saat terbaca.</p>
+          </div>
+          <div class="modal__footer">
+            <button type="button" @click="closeCameraScanner" class="btn-secondary">Tutup Kamera</button>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -1268,7 +1389,7 @@ function renderBarcode(el, value) {
           </div>
           <div class="modal__footer">
             <button @click="showDraftSaveModal = false" class="btn-secondary">Batal</button>
-            <button @click="confirmSaveDraft" class="btn-primary" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
+            <button @click="confirmSaveDraft" class="btn-primary" style="background: linear-gradient(135deg, #526d8a, #435a74); border: none;">
               <FolderDown :size="16" />
               Simpan Draf
             </button>
@@ -1313,7 +1434,7 @@ function renderBarcode(el, value) {
                     <td class="py-3 text-right space-x-2 whitespace-nowrap">
                       <button
                         @click="recallDraft(idx)"
-                        class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition"
+                        class="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-bold hover:bg-primary-700 transition"
                       >
                         Panggil
                       </button>
@@ -1452,21 +1573,21 @@ function renderBarcode(el, value) {
   color: #f1f5f9;
 }
 .category-tab--active {
-  background: #2563eb;
+  background: #526d8a;
   color: white;
-  border-color: #2563eb;
+  border-color: #526d8a;
 }
 .dark .category-tab--active {
-  background: #3b82f6;
+  background: #526d8a;
   color: white;
-  border-color: #3b82f6;
+  border-color: #526d8a;
 }
 .category-tab--active:hover {
-  background: #1d4ed8;
+  background: #435a74;
   color: white;
 }
 .dark .category-tab--active:hover {
-  background: #2563eb;
+  background: #526d8a;
   color: white;
 }
 
@@ -1506,10 +1627,10 @@ function renderBarcode(el, value) {
 .product-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: #3b82f6;
+  border-color: #526d8a;
 }
 .dark .product-card:hover {
-  border-color: #3b82f6;
+  border-color: #526d8a;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
 .product-card:active {
@@ -1591,7 +1712,7 @@ function renderBarcode(el, value) {
 .product-card__price {
   font-size: 0.72rem;
   font-weight: 800;
-  color: #2563eb;
+  color: #526d8a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1637,7 +1758,7 @@ function renderBarcode(el, value) {
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
 }
-.pos-search:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.pos-search:focus { border-color: #526d8a; box-shadow: 0 0 0 3px rgba(82,109,138,0.12); }
 
 .search-results {
   position: absolute; top: calc(100% + 6px); left: 0; right: 0;
@@ -1655,12 +1776,12 @@ function renderBarcode(el, value) {
 .search-item:hover { background: #f0f7ff; }
 .search-item--highlighted {
   background: #f0f7ff;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #526d8a;
   padding-left: 12px;
 }
 .search-item__name { font-weight: 500; font-size: 0.9rem; color: #0f172a; }
 .search-item__meta { font-size: 0.75rem; color: #94a3b8; }
-.search-item__price { font-weight: 600; color: #2563eb; font-size: 0.9rem; white-space: nowrap; }
+.search-item__price { font-weight: 600; color: #526d8a; font-size: 0.9rem; white-space: nowrap; }
 
 /* Cart */
 .cart-area {
@@ -1728,7 +1849,7 @@ function renderBarcode(el, value) {
   width: 120px; padding: 6px 10px; border: 1px solid #e2e8f0;
   border-radius: 8px; font-size: 0.9rem; font-weight: 600; outline: none;
 }
-.discount-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+.discount-input:focus { border-color: #526d8a; box-shadow: 0 0 0 2px rgba(82,109,138,0.12); }
 
 /* ── Right ── */
 .pos-right {
@@ -1767,7 +1888,7 @@ function renderBarcode(el, value) {
   font-size: 0.75rem; font-weight: 500; color: #64748b;
   cursor: pointer; transition: all 0.15s;
 }
-.payment-method-btn.active { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
+.payment-method-btn.active { border-color: #526d8a; background: #eff6ff; color: #526d8a; }
 .payment-method-btn:hover:not(.active) { background: #f8fafc; }
 
 /* Notes */
@@ -1776,18 +1897,18 @@ function renderBarcode(el, value) {
   border-radius: 8px; font-size: 0.85rem; outline: none;
   font-family: inherit;
 }
-.pos-notes:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+.pos-notes:focus { border-color: #526d8a; box-shadow: 0 0 0 2px rgba(82,109,138,0.12); }
 
 /* Pay Button */
 .pay-btn {
   width: 100%; padding: 14px;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, #526d8a, #435a74);
   color: white; border: none; border-radius: 10px;
   font-size: 1rem; font-weight: 700; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: all 0.15s;
 }
-.pay-btn:hover:not(:disabled) { background: linear-gradient(135deg, #1d4ed8, #1e40af); transform: translateY(-1px); }
+.pay-btn:hover:not(:disabled) { background: linear-gradient(135deg, #435a74, #1e40af); transform: translateY(-1px); }
 .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 .clear-btn {
@@ -1868,7 +1989,7 @@ function renderBarcode(el, value) {
   background: white; font-size: 0.72rem; font-weight: 600; color: #475569;
   cursor: pointer; transition: all 0.1s; text-align: center;
 }
-.quick-cash-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #2563eb; }
+.quick-cash-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #526d8a; }
 
 .change-display {
   display: flex; justify-content: space-between; align-items: center;
@@ -1895,13 +2016,25 @@ function renderBarcode(el, value) {
 /* ── Receipt Modal ── */
 .receipt-modal { max-width: 340px; }
 .receipt {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: inherit;
   font-size: 0.82rem; line-height: 1.5;
   padding: 16px 20px;
 }
 .receipt__header { text-align: center; margin-bottom: 8px; }
+.receipt__logo {
+  display: block;
+  width: 34mm;
+  height: 16mm;
+  object-fit: contain;
+  margin: 0 auto 4px;
+}
 .receipt__header h2 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
 .receipt__header p { font-size: 0.75rem; color: #475569; }
+.receipt__socials { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+.receipt__socials--single { grid-template-columns: minmax(0, 1fr); }
+.receipt__social { display: flex; align-items: flex-start; justify-content: center; gap: 3px; min-width: 0; overflow-wrap: anywhere; text-align: center; }
+.receipt__social span { min-width: 0; overflow-wrap: anywhere; }
+.receipt__social-icon { width: 12px; height: 12px; flex: 0 0 12px; }
 .receipt__divider { color: #94a3b8; margin: 8px 0; font-size: 0.75rem; }
 .receipt__meta-row, .receipt__total-row {
   display: flex; justify-content: space-between; gap: 8px;
@@ -1944,6 +2077,11 @@ function renderBarcode(el, value) {
 <style>
 /* Print styles */
 @media print {
+  .receipt__logo {
+    filter: brightness(0);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   @page {
     margin: 0;
     size: auto;
@@ -1979,7 +2117,7 @@ function renderBarcode(el, value) {
   .receipt {
     font-family: 'Courier New', Courier, monospace !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     background: transparent !important;
     box-sizing: border-box !important;
   }
@@ -2005,22 +2143,54 @@ function renderBarcode(el, value) {
 
 .save-draft-btn {
   width: 100%; padding: 10px;
-  background: none; border: 1px solid #c7d2fe; border-radius: 8px;
-  color: #4f46e5; font-size: 0.8rem; cursor: pointer;
+  background: none; border: 1px solid #d3dce4; border-radius: 8px;
+  color: #526d8a; font-size: 0.8rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: all 0.15s;
   margin-top: 6px;
 }
-.save-draft-btn:hover:not(:disabled) { background: #e0e7ff; }
+.save-draft-btn:hover:not(:disabled) { background: #e7ecf1; }
 .save-draft-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .draft-list-trigger {
   height: 38px; padding: 0 12px;
-  background: #eff6ff; color: #2563eb;
+  background: #eff6ff; color: #526d8a;
   border: 1px solid #bfdbfe; border-radius: 10px;
   font-weight: 600; font-size: 0.8rem; cursor: pointer;
   display: flex; align-items: center; gap: 6px;
   transition: all 0.15s; white-space: nowrap;
 }
 .draft-list-trigger:hover { background: #dbeafe; }
+
+.camera-scan-trigger {
+  height: 38px; padding: 0 12px;
+  background: #f8fafc; color: #334155;
+  border: 1px solid #cbd5e1; border-radius: 10px;
+  font-weight: 600; font-size: 0.8rem; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.15s; white-space: nowrap;
+}
+.camera-scan-trigger:hover { background: #eff6ff; border-color: #93c5fd; color: #435a74; }
+.camera-scan-overlay { z-index: 100000; }
+.camera-scan-modal { width: min(92vw, 560px); border-radius: 20px; overflow: hidden; }
+.camera-scan-body { display: flex; flex-direction: column; gap: 12px; }
+.camera-preview {
+  position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden;
+  display: grid; place-items: center; background: #0f172a; border-radius: 14px;
+}
+.camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+.camera-scan-frame {
+  position: absolute; left: 10%; top: 35%; width: 80%; height: 30%;
+  border: 2px solid #38bdf8; border-radius: 12px;
+  box-shadow: 0 0 0 999px rgba(15, 23, 42, 0.25);
+}
+.camera-loading { position: absolute; color: white; font-size: 0.9rem; }
+.camera-scan-hint, .camera-scan-error { margin: 0; font-size: 0.85rem; line-height: 1.5; }
+.camera-scan-hint { color: #64748b; }
+.camera-scan-error { color: #b91c1c; background: #fef2f2; padding: 10px 12px; border-radius: 10px; }
+
+@media (max-width: 640px) {
+  .camera-scan-trigger { padding: 0 10px; }
+  .camera-scan-trigger span { display: none; }
+}
 </style>

@@ -3,7 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref, watch } from 'vue'
 import { router, useForm, Link } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
-import { 
+import {
   Search, Plus, Pencil, Trash2, X, User, Phone, Mail, MapPin, Award
 } from '@lucide/vue'
 
@@ -119,7 +119,7 @@ const performDelete = () => {
 <template>
   <AppLayout title="Kelola Pelanggan">
     <div class="space-y-6">
-      
+
       <!-- Header -->
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -129,9 +129,9 @@ const performDelete = () => {
           </p>
         </div>
 
-        <button 
+        <button
           @click="openCreateModal"
-          class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-lg hover:shadow-indigo-500/20 active:shadow-none transition-all duration-200"
+          class="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 active:bg-primary-800 rounded-xl shadow-lg hover:shadow-primary-500/20 active:shadow-none transition-all duration-200"
         >
           <Plus class="w-4.5 h-4.5" />
           <span>Tambah Pelanggan</span>
@@ -142,11 +142,11 @@ const performDelete = () => {
       <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div class="relative w-full md:max-w-md">
           <Search class="absolute left-4 top-3 h-4.5 w-4.5 text-slate-400" />
-          <input 
+          <input
             v-model="search"
-            type="text" 
+            type="text"
             placeholder="Cari nama, telepon, atau email..."
-            class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+            class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm"
           />
         </div>
       </div>
@@ -167,15 +167,15 @@ const performDelete = () => {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-              <tr 
-                v-for="c in customers.data" 
+              <tr
+                v-for="c in customers.data"
                 :key="c.id"
                 class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition duration-150"
               >
                 <!-- Avatar & Name -->
                 <td class="py-4 px-6">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white uppercase text-sm shrink-0 bg-indigo-600 dark:bg-indigo-500 shadow-md shadow-indigo-600/10">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white uppercase text-sm shrink-0 bg-primary-600 dark:bg-primary-500 shadow-md shadow-primary-600/10">
                       {{ c.name.charAt(0) }}
                     </div>
                     <div>
@@ -218,15 +218,15 @@ const performDelete = () => {
                 <!-- Actions -->
                 <td class="py-4 px-6 text-right">
                   <div class="flex items-center justify-end gap-2">
-                    <button 
+                    <button
                       @click="openEditModal(c)"
-                      class="flex items-center justify-center p-2 text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200 dark:border-slate-700 hover:border-indigo-100 rounded-xl transition dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+                      class="flex items-center justify-center p-2 text-slate-500 hover:text-primary-600 bg-slate-50 hover:bg-primary-50 border border-slate-200 dark:border-slate-700 hover:border-primary-100 rounded-xl transition dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-primary-900/30 dark:hover:text-primary-400"
                       title="Edit Pelanggan"
                     >
                       <Pencil class="w-4 h-4" />
                     </button>
 
-                    <button 
+                    <button
                       @click="confirmDelete(c)"
                       class="flex items-center justify-center p-2 text-slate-500 hover:text-red-600 bg-slate-50 hover:bg-red-50 border border-slate-200 dark:border-slate-700 hover:border-red-100 rounded-xl transition dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-red-950/30 dark:hover:text-red-400"
                       title="Hapus Pelanggan"
@@ -253,17 +253,17 @@ const performDelete = () => {
 
           <div class="flex items-center gap-1.5">
             <template v-for="(link, i) in customers.links" :key="i">
-              <div 
-                v-if="link.url === null" 
+              <div
+                v-if="link.url === null"
                 class="px-3.5 py-2 text-xs text-slate-400 cursor-default rounded-xl"
                 v-html="link.label"
               />
-              <Link 
-                v-else 
+              <Link
+                v-else
                 :href="link.url"
                 class="px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-200"
-                :class="link.active 
-                  ? 'bg-indigo-600 border-indigo-600 text-white font-bold' 
+                :class="link.active
+                  ? 'bg-primary-600 border-primary-600 text-white font-bold'
                   : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'"
                 v-html="link.label"
               />
@@ -276,7 +276,7 @@ const performDelete = () => {
       <Teleport to="body">
         <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
           <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden modal">
-          
+
             <!-- Modal Header -->
             <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
               <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">
@@ -289,18 +289,18 @@ const performDelete = () => {
 
             <!-- Modal Body Form -->
             <form @submit.prevent="submit" class="p-6 space-y-4">
-              
+
               <!-- Name -->
               <div>
                 <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
                 <div class="relative">
                   <User class="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
-                  <input 
+                  <input
                     v-model="form.name"
                     type="text"
                     required
                     placeholder="Contoh: Andi Wijaya"
-                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                   />
                 </div>
                 <p v-if="form.errors.name" class="text-xs text-red-500 mt-1">{{ form.errors.name }}</p>
@@ -311,11 +311,11 @@ const performDelete = () => {
                 <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">No. Telepon / HP</label>
                 <div class="relative">
                   <Phone class="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
-                  <input 
+                  <input
                     v-model="form.phone"
                     type="text"
                     placeholder="Contoh: 08123456789"
-                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                   />
                 </div>
                 <p v-if="form.errors.phone" class="text-xs text-red-500 mt-1">{{ form.errors.phone }}</p>
@@ -326,11 +326,11 @@ const performDelete = () => {
                 <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Email (Opsional)</label>
                 <div class="relative">
                   <Mail class="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
-                  <input 
+                  <input
                     v-model="form.email"
                     type="email"
                     placeholder="andi@gmail.com"
-                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                   />
                 </div>
                 <p v-if="form.errors.email" class="text-xs text-red-500 mt-1">{{ form.errors.email }}</p>
@@ -341,11 +341,11 @@ const performDelete = () => {
                 <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Alamat Lengkap</label>
                 <div class="relative">
                   <MapPin class="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
-                  <textarea 
+                  <textarea
                     v-model="form.address"
                     placeholder="Contoh: Jl. Merdeka No. 12"
                     rows="2.5"
-                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none font-sans"
+                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm resize-none font-sans"
                   />
                 </div>
                 <p v-if="form.errors.address" class="text-xs text-red-500 mt-1">{{ form.errors.address }}</p>
@@ -356,12 +356,12 @@ const performDelete = () => {
                 <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Poin Loyalitas</label>
                 <div class="relative">
                   <Award class="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
-                  <input 
+                  <input
                     v-model="form.points"
                     type="number"
                     min="0"
                     required
-                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                    class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                   />
                 </div>
                 <p v-if="form.errors.points" class="text-xs text-red-500 mt-1">{{ form.errors.points }}</p>
@@ -369,18 +369,18 @@ const performDelete = () => {
 
               <!-- Modal Footer Buttons -->
               <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
-                <button 
-                  type="button" 
-                  @click="closeModal" 
+                <button
+                  type="button"
+                  @click="closeModal"
                   class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900/50 transition duration-150"
                 >
                   Batalkan
                 </button>
-                
-                <button 
+
+                <button
                   type="submit"
                   :disabled="form.processing"
-                  class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-md shadow-indigo-600/10"
+                  class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-md shadow-primary-600/10"
                 >
                   {{ form.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
                 </button>
@@ -399,7 +399,7 @@ const performDelete = () => {
             <div class="mx-auto w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-450 flex items-center justify-center">
               <Trash2 :size="20" />
             </div>
-            
+
             <!-- Title & brief text -->
             <div class="space-y-1.5">
               <h3 class="text-lg font-bold text-slate-900 dark:text-white">Hapus Pelanggan?</h3>
@@ -410,15 +410,15 @@ const performDelete = () => {
 
             <!-- Actions -->
             <div class="grid grid-cols-2 gap-3 pt-2">
-              <button 
-                type="button" 
-                @click="deleteTarget = null" 
+              <button
+                type="button"
+                @click="deleteTarget = null"
                 class="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold rounded-xl transition duration-150 cursor-pointer active:scale-95"
               >
                 Batal
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 @click="performDelete"
                 class="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl transition duration-150 shadow-md shadow-rose-600/10 cursor-pointer active:scale-95"
               >

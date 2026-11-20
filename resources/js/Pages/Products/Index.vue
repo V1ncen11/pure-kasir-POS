@@ -263,7 +263,7 @@ tr:hover td { background: #fafafa; }
 }
 .page-btn:hover:not(:disabled) { background: #f1f5f9; }
 .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.page-btn--active { background: #2563eb; color: white; border-color: #2563eb; }
+.page-btn--active { background: #526d8a; color: white; border-color: #526d8a; }
 
 .empty-state {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
+import DashboardStatIllustration from '@/Components/DashboardStatIllustration.vue'
 import { ref, watch, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
@@ -76,7 +77,7 @@ const chartOptions = computed(() => {
       fontFamily: 'Inter, sans-serif',
       type: 'area'
     },
-    colors: ['#4f46e5'],
+    colors: ['#526d8a'],
     fill: {
       type: 'gradient',
       gradient: {
@@ -92,7 +93,7 @@ const chartOptions = computed(() => {
     },
     markers: {
       size: 4,
-      colors: ['#4f46e5'],
+      colors: ['#526d8a'],
       strokeColors: '#ffffff',
       strokeWidth: 2,
       hover: { size: 6 }
@@ -100,7 +101,7 @@ const chartOptions = computed(() => {
     xaxis: {
       categories: props.chartDays.map(d => d.date),
       labels: {
-        style: { colors: '#94a3b8', fontSize: '12px' }
+        style: { colors: '#7187a1', fontSize: '12px' }
       },
       axisBorder: { show: false },
       axisTicks: { show: false }
@@ -112,11 +113,11 @@ const chartOptions = computed(() => {
           if (val >= 1000) return (val / 1000).toFixed(0) + 'k'
           return val
         },
-        style: { colors: '#94a3b8', fontSize: '12px' }
+        style: { colors: '#7187a1', fontSize: '12px' }
       }
     },
     grid: {
-      borderColor: '#f1f5f9',
+      borderColor: '#e4eaf2',
       strokeDashArray: 4,
       xaxis: { lines: { show: true } },
       yaxis: { lines: { show: true } }
@@ -150,12 +151,13 @@ const exportCsv = () => {
 
 <template>
   <AppLayout title="Laporan Penjualan">
+    <template #title>Laporan Penjualan</template>
     <div class="space-y-6">
       
       <!-- Header Section -->
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Laporan Penjualan</h1>
+          <h1 class="text-3xl font-bold tracking-tight text-primary-800 dark:text-white">Laporan Penjualan</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Analisis kinerja penjualan, omset, dan metode pembayaran toko Anda.
           </p>
@@ -164,7 +166,7 @@ const exportCsv = () => {
         <div class="flex flex-wrap items-center gap-2">
           <button 
             @click="exportCsv"
-            class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition duration-200 dark:bg-indigo-950/20 dark:border-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-primary-700 bg-primary-50 border border-primary-200 rounded-xl hover:bg-primary-100 transition duration-200 dark:bg-primary-900/20 dark:border-primary-800 dark:text-primary-300 dark:hover:bg-primary-900/30"
           >
             <FileDown class="w-4 h-4" />
             <span>Ekspor CSV</span>
@@ -179,25 +181,25 @@ const exportCsv = () => {
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2">Preset:</span>
             <button 
               @click="setPresetRange('today')"
-              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/30 transition"
             >
               Hari Ini
             </button>
             <button 
               @click="setPresetRange('yesterday')"
-              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/30 transition"
             >
               Kemarin
             </button>
             <button 
               @click="setPresetRange('this_month')"
-              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/30 transition"
             >
               Bulan Ini
             </button>
             <button 
               @click="setPresetRange('last_30_days')"
-              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 transition"
+              class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/30 transition"
             >
               30 Hari Terakhir
             </button>
@@ -210,7 +212,7 @@ const exportCsv = () => {
                 <input 
                   v-model="date_from"
                   type="date"
-                  class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
               <div>
@@ -218,13 +220,13 @@ const exportCsv = () => {
                 <input 
                   v-model="date_to"
                   type="date"
-                  class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
             </div>
             <button 
               @click="applyFilters"
-              class="self-end px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-850 text-white text-xs font-bold rounded-lg transition duration-200 shadow-md shadow-indigo-600/10"
+              class="self-end px-3 py-1.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-xs font-bold rounded-lg transition duration-200 shadow-md shadow-primary-600/10"
             >
               Filter
             </button>
@@ -235,89 +237,89 @@ const exportCsv = () => {
       <!-- Financial & Operational Widget Cards (Unified Responsive Grid) -->
       <div class="grid grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6 gap-4">
         <!-- Revenue Card -->
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+        <div class="bg-[#fff0e6] dark:bg-slate-800 border border-[#f4d6c0] dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
           <div class="space-y-1 min-w-0 pr-7">
-            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Total Omset</span>
+            <span class="block text-[11px] font-bold tracking-wider text-primary-700 dark:text-primary-300 uppercase truncate">Total Omset</span>
             <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.total_revenue) }}</h3>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
-              <TrendingUp class="w-3 h-3 shrink-0 text-indigo-500 dark:text-indigo-400" />
+            <p class="text-[11px] text-primary-700 dark:text-primary-300 flex items-center gap-1 font-semibold truncate">
+              <TrendingUp class="w-3 h-3 shrink-0 text-primary-600 dark:text-primary-400" />
               <span>Omset Kotor</span>
             </p>
           </div>
-          <div class="p-1.5 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg text-indigo-600 dark:text-indigo-400 shrink-0 ml-1">
-            <Banknote class="w-4 h-4" />
+          <div class="shrink-0 ml-1">
+            <DashboardStatIllustration kind="sales" />
           </div>
         </div>
 
         <!-- Expense Card -->
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+        <div class="bg-[#e7eff8] dark:bg-slate-800 border border-[#d5e1ef] dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
           <div class="space-y-1 min-w-0 pr-7">
-            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Pengeluaran</span>
+            <span class="block text-[11px] font-bold tracking-wider text-primary-700 dark:text-primary-300 uppercase truncate">Pembelian Stok</span>
             <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.total_expense) }}</h3>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
+            <p class="text-[11px] text-primary-700 dark:text-primary-300 flex items-center gap-1 font-semibold truncate">
               <FileDown class="w-3 h-3 shrink-0 text-slate-500 dark:text-slate-400" />
               <span>Belanja Stok</span>
             </p>
           </div>
-          <div class="p-1.5 bg-slate-100 dark:bg-slate-900/50 rounded-lg text-slate-600 dark:text-slate-400 shrink-0 ml-1">
-            <ShoppingBag class="w-4 h-4" />
+          <div class="shrink-0 ml-1">
+            <DashboardStatIllustration kind="products" />
           </div>
         </div>
 
         <!-- Profit Card -->
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+        <div class="bg-[#e7f4df] dark:bg-slate-800 border border-[#d5e8cc] dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
           <div class="space-y-1 min-w-0 pr-7">
-            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Keuntungan</span>
+            <span class="block text-[11px] font-bold tracking-wider text-primary-700 dark:text-primary-300 uppercase truncate">Selisih Periode</span>
             <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.net_profit) }}</h3>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
+            <p class="text-[11px] text-primary-700 dark:text-primary-300 flex items-center gap-1 font-semibold truncate">
               <ArrowUpRight class="w-3 h-3 shrink-0 text-emerald-500 dark:text-emerald-400" />
-              <span>Net Profit</span>
+              <span>Omzet dikurangi pembelian</span>
             </p>
           </div>
-          <div class="p-1.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
-            <TrendingUp class="w-4 h-4" />
+          <div class="shrink-0 ml-1">
+            <DashboardStatIllustration kind="revenue" />
           </div>
         </div>
 
         <!-- Transactions Card -->
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+        <div class="bg-[#fce8ec] dark:bg-slate-800 border border-[#f2d2db] dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
           <div class="space-y-1 min-w-0 pr-7">
-            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Transaksi</span>
+            <span class="block text-[11px] font-bold tracking-wider text-primary-700 dark:text-primary-300 uppercase truncate">Transaksi</span>
             <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ summary.total_transactions }}</h3>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
+            <p class="text-[11px] text-primary-700 dark:text-primary-300 flex items-center gap-1 font-semibold truncate">
               <span>Sukses</span>
             </p>
           </div>
-          <div class="p-1.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">
-            <ShoppingBag class="w-4 h-4" />
+          <div class="shrink-0 ml-1">
+            <DashboardStatIllustration kind="transactions" />
           </div>
         </div>
 
         <!-- Avg Value Card -->
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+        <div class="bg-[#edf2f6] dark:bg-slate-800 border border-[#dbe4ed] dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
           <div class="space-y-1 min-w-0 pr-7">
-            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Rata-rata</span>
+            <span class="block text-[11px] font-bold tracking-wider text-primary-700 dark:text-primary-300 uppercase truncate">Rata-rata</span>
             <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.avg_transaction) }}</h3>
-            <p class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold truncate">
+            <p class="text-[11px] text-primary-700 dark:text-primary-300 flex items-center gap-1 font-semibold truncate">
               <span>Nilai struk</span>
             </p>
           </div>
-          <div class="p-1.5 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-blue-600 dark:text-blue-400 shrink-0 ml-1">
-            <ArrowUpRight class="w-4 h-4" />
+          <div class="shrink-0 ml-1">
+            <DashboardStatIllustration kind="average" />
           </div>
         </div>
 
         <!-- Discounts Card -->
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
+        <div class="bg-[#fff3d6] dark:bg-slate-800 border border-[#f3e2b5] dark:border-slate-700 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
           <div class="space-y-1 min-w-0 pr-7">
-            <span class="block text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">Diskon</span>
+            <span class="block text-[11px] font-bold tracking-wider text-primary-700 dark:text-primary-300 uppercase truncate">Diskon</span>
             <h3 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white">{{ formatRupiah(summary.total_discount) }}</h3>
-            <p class="text-[10px] text-rose-500 flex items-center gap-1 font-semibold truncate">
+            <p class="text-[11px] text-rose-700 dark:text-rose-300 flex items-center gap-1 font-semibold truncate">
               <span>Potongan</span>
             </p>
           </div>
-          <div class="p-1.5 bg-rose-50 dark:bg-rose-950/30 rounded-lg text-rose-600 dark:text-rose-400 shrink-0 ml-1">
-            <Percent class="w-4 h-4" />
+          <div class="shrink-0 ml-1">
+            <DashboardStatIllustration kind="discount" />
           </div>
         </div>
       </div>
@@ -328,7 +330,7 @@ const exportCsv = () => {
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm p-6 lg:col-span-2 space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tren Kinerja Penjualan</h3>
+              <h3 class="text-lg font-bold text-primary-800 dark:text-white">Tren Kinerja Penjualan</h3>
               <p class="text-xs text-slate-400 dark:text-slate-500">Grafik omset harian pada rentang waktu terpilih.</p>
             </div>
           </div>
@@ -346,7 +348,7 @@ const exportCsv = () => {
         <!-- Payment Method Breakdown (Right 1 column) -->
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm p-6 space-y-6">
           <div>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Metode Pembayaran</h3>
+            <h3 class="text-lg font-bold text-primary-800 dark:text-white">Metode Pembayaran</h3>
             <p class="text-xs text-slate-400 dark:text-slate-500">Distribusi omset berdasarkan cara bayar.</p>
           </div>
 
@@ -361,7 +363,7 @@ const exportCsv = () => {
                   :class="{
                     'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400': p.payment_method === 'cash',
                     'bg-sky-50 text-sky-600 dark:bg-sky-950/20 dark:text-sky-400': p.payment_method === 'transfer',
-                    'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400': p.payment_method === 'qris',
+                    'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300': p.payment_method === 'qris',
                   }"
                 >
                   <Banknote v-if="p.payment_method === 'cash'" class="w-4 h-4" />
@@ -379,7 +381,7 @@ const exportCsv = () => {
 
               <div class="text-right">
                 <div class="text-sm font-extrabold text-slate-900 dark:text-white">{{ formatRupiah(p.total) }}</div>
-                <div class="text-xxs font-bold text-indigo-600 dark:text-indigo-400">
+                <div class="text-xxs font-bold text-primary-700 dark:text-primary-300">
                   {{ ((p.total / summary.total_revenue) * 100).toFixed(1) }}%
                 </div>
               </div>
@@ -400,7 +402,7 @@ const exportCsv = () => {
           <div class="flex items-center gap-2">
             <Award class="w-5 h-5 text-amber-500" />
             <div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">10 Produk Terlaris</h3>
+              <h3 class="text-lg font-bold text-primary-800 dark:text-white">10 Produk Terlaris</h3>
               <p class="text-xs text-slate-400 dark:text-slate-500">Paling banyak terjual pada rentang waktu terpilih.</p>
             </div>
           </div>
@@ -445,7 +447,7 @@ const exportCsv = () => {
         <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm p-6 lg:col-span-2 space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Daftar Penjualan</h3>
+              <h3 class="text-lg font-bold text-primary-800 dark:text-white">Daftar Penjualan</h3>
               <p class="text-xs text-slate-400 dark:text-slate-500">Daftar transaksi dalam rentang waktu laporan.</p>
             </div>
           </div>
@@ -468,7 +470,7 @@ const exportCsv = () => {
                   class="text-sm hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition duration-100"
                 >
                   <td class="py-3.5">
-                    <Link :href="route('transactions.show', t.id)" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    <Link :href="route('transactions.show', t.id)" class="font-bold text-primary-700 dark:text-primary-300 hover:underline">
                       {{ t.invoice_number }}
                     </Link>
                   </td>
@@ -508,7 +510,7 @@ const exportCsv = () => {
                   :href="link.url"
                   class="px-2.5 py-1 text-xxs font-bold rounded-lg border transition"
                   :class="link.active 
-                    ? 'bg-indigo-600 border-indigo-600 text-white' 
+                    ? 'bg-primary-600 border-primary-600 text-white'
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'"
                   v-html="link.label"
                 />

@@ -4,9 +4,9 @@ import { ref } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
 import { 
-  Store, MapPin, Phone, Mail, Percent, AlertCircle,
+  Store, MapPin, Phone, Mail, AtSign, Globe, Percent, AlertCircle,
   FileText, Upload, Image, Trash2, ShieldCheck, ToggleLeft, ToggleRight,
-  Database, Download
+  Database, Download, FileSpreadsheet
 } from '@lucide/vue'
 
 const props = defineProps({
@@ -21,6 +21,8 @@ const form = useForm({
   store_address: props.settings.store_address || '',
   store_phone: props.settings.store_phone || '',
   store_email: props.settings.store_email || '',
+  instagram: props.settings.instagram || '',
+  website: props.settings.website || '',
   tax_percentage: props.settings.tax_percentage || 0,
   receipt_header: props.settings.receipt_header || '',
   receipt_footer: props.settings.receipt_footer || '',
@@ -61,9 +63,6 @@ const onFileChange = (e) => {
 const uploadLogo = () => {
   logoForm.post(route('settings.logo'), {
     forceFormData: true,
-    onSuccess: () => {
-      toast.success('Logo toko berhasil diperbarui!')
-    },
     onError: () => {
       toast.error('Gagal mengupload logo toko.')
     }
@@ -72,9 +71,6 @@ const uploadLogo = () => {
 
 const saveSettings = () => {
   form.post(route('settings.update'), {
-    onSuccess: () => {
-      toast.success('Pengaturan toko berhasil disimpan!')
-    },
     onError: () => {
       toast.error('Gagal menyimpan pengaturan. Mohon cek kembali inputan Anda.')
     }
@@ -84,6 +80,7 @@ const saveSettings = () => {
 
 <template>
   <AppLayout title="Pengaturan Sistem">
+    <template #title>Pengaturan Toko</template>
     <div class="max-w-5xl mx-auto space-y-6">
       
       <!-- Header -->
@@ -101,7 +98,7 @@ const saveSettings = () => {
             @click="activeTab = 'general'"
             class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition duration-150 border"
             :class="activeTab === 'general'
-              ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/10'
+              ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/10'
               : 'bg-white border-slate-100 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-750 dark:text-slate-300 dark:hover:bg-slate-700/50'"
           >
             <Store class="w-4.5 h-4.5" />
@@ -112,7 +109,7 @@ const saveSettings = () => {
             @click="activeTab = 'receipt'"
             class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition duration-150 border"
             :class="activeTab === 'receipt'
-              ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/10'
+              ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/10'
               : 'bg-white border-slate-100 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-750 dark:text-slate-300 dark:hover:bg-slate-700/50'"
           >
             <FileText class="w-4.5 h-4.5" />
@@ -123,7 +120,7 @@ const saveSettings = () => {
             @click="activeTab = 'finance'"
             class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition duration-150 border"
             :class="activeTab === 'finance'
-              ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/10'
+              ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/10'
               : 'bg-white border-slate-100 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-750 dark:text-slate-300 dark:hover:bg-slate-700/50'"
           >
             <Percent class="w-4.5 h-4.5" />
@@ -134,7 +131,7 @@ const saveSettings = () => {
             @click="activeTab = 'backup'"
             class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition duration-150 border"
             :class="activeTab === 'backup'
-              ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/10'
+              ? 'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-600/10'
               : 'bg-white border-slate-100 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-slate-750 dark:text-slate-300 dark:hover:bg-slate-700/50'"
           >
             <Database class="w-4.5 h-4.5" />
@@ -172,7 +169,7 @@ const saveSettings = () => {
                 <button 
                   type="button" 
                   @click="triggerFileSelect"
-                  class="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-750 text-xs font-bold rounded-xl transition dark:bg-indigo-950/20 dark:border-indigo-900/30 dark:text-indigo-400"
+                  class="flex items-center justify-center gap-2 px-4 py-2 bg-primary-50 hover:bg-primary-100 border border-primary-200 text-indigo-750 text-xs font-bold rounded-xl transition dark:bg-primary-900/20 dark:border-primary-900/30 dark:text-primary-400"
                 >
                   <Upload class="w-3.5 h-3.5" />
                   <span>Pilih Logo Toko</span>
@@ -186,17 +183,24 @@ const saveSettings = () => {
           <div v-show="activeTab === 'backup'" class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-6 shadow-sm space-y-4">
             <h3 class="text-sm font-extrabold text-slate-850 dark:text-white uppercase tracking-wider">Pencadangan Data (Backup)</h3>
             
-            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Unduh salinan cadangan (backup) seluruh database Anda yang mencakup daftar produk, kategori, data pelanggan, riwayat transaksi, pengaturan, dan log aktivitas. Simpan file ini di tempat yang aman untuk mengantisipasi kehilangan data.
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Backup SQL digunakan untuk memulihkan database melalui alat pengelolaan database. Ekspor Excel menyertakan ringkasan operasional hari ini (transaksi, omzet, pembelian stok, dan stok menipis/habis), daftar transaksi hari ini, daftar stok yang perlu dicek, serta data lengkap produk dan riwayat toko.
             </p>
 
-            <div class="pt-2 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div class="pt-2 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
               <a 
                 :href="route('settings.backup')" 
                 class="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-lg shadow-emerald-650/15 cursor-pointer active:scale-95"
               >
                 <Download class="w-4 h-4" />
                 <span>Download Backup Database (SQL)</span>
+              </a>
+              <a
+                :href="route('settings.export-data')"
+                class="flex items-center justify-center gap-2 px-5 py-3 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-md shadow-primary-600/10 cursor-pointer active:scale-95"
+              >
+                <FileSpreadsheet class="w-4 h-4" />
+                <span>Ekspor Data Toko (Excel)</span>
               </a>
             </div>
           </div>
@@ -219,7 +223,7 @@ const saveSettings = () => {
                       type="text"
                       required
                       placeholder="Masukkan nama toko Anda"
-                      class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                      class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                     />
                   </div>
                   <p v-if="form.errors.store_name" class="text-xs text-red-500 mt-1">{{ form.errors.store_name }}</p>
@@ -235,7 +239,7 @@ const saveSettings = () => {
                         v-model="form.store_phone"
                         type="text"
                         placeholder="Contoh: 08123456789"
-                        class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                        class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                       />
                     </div>
                     <p v-if="form.errors.store_phone" class="text-xs text-red-500 mt-1">{{ form.errors.store_phone }}</p>
@@ -249,10 +253,43 @@ const saveSettings = () => {
                         v-model="form.store_email"
                         type="email"
                         placeholder="toko@bisnis.com"
-                        class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                        class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                       />
                     </div>
                     <p v-if="form.errors.store_email" class="text-xs text-red-500 mt-1">{{ form.errors.store_email }}</p>
+                  </div>
+                </div>
+
+                <!-- Optional Social Media & Website -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Instagram <span class="normal-case tracking-normal font-medium">(opsional)</span></label>
+                    <div class="relative">
+                      <AtSign class="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
+                      <input
+                        v-model="form.instagram"
+                        type="text"
+                        maxlength="120"
+                        placeholder="@namatoko atau tautan Instagram"
+                        class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
+                      />
+                    </div>
+                    <p v-if="form.errors.instagram" class="text-xs text-red-500 mt-1">{{ form.errors.instagram }}</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Website <span class="normal-case tracking-normal font-medium">(opsional)</span></label>
+                    <div class="relative">
+                      <Globe class="absolute left-3.5 top-2.5 h-4.5 w-4.5 text-slate-400" />
+                      <input
+                        v-model="form.website"
+                        type="url"
+                        maxlength="255"
+                        placeholder="https://tokokamu.com"
+                        class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
+                      />
+                    </div>
+                    <p v-if="form.errors.website" class="text-xs text-red-500 mt-1">{{ form.errors.website }}</p>
                   </div>
                 </div>
 
@@ -265,7 +302,7 @@ const saveSettings = () => {
                       v-model="form.store_address"
                       rows="3"
                       placeholder="Masukkan alamat fisik toko secara lengkap..."
-                      class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                      class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                     ></textarea>
                   </div>
                   <p v-if="form.errors.store_address" class="text-xs text-red-500 mt-1">{{ form.errors.store_address }}</p>
@@ -285,7 +322,7 @@ const saveSettings = () => {
                     v-model="form.receipt_header"
                     type="text"
                     placeholder="Contoh: Terimakasih telah belanja di toko kami!"
-                    class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                    class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                   />
                   <p class="text-xxs text-slate-405 dark:text-slate-550 mt-1">Dicetak pada bagian paling atas kertas struk.</p>
                   <p v-if="form.errors.receipt_header" class="text-xs text-red-500 mt-1">{{ form.errors.receipt_header }}</p>
@@ -298,7 +335,7 @@ const saveSettings = () => {
                     v-model="form.receipt_footer"
                     type="text"
                     placeholder="Contoh: Barang yang dibeli tidak dapat ditukar"
-                    class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                    class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                   />
                   <p class="text-xxs text-slate-405 dark:text-slate-550 mt-1">Dicetak pada bagian paling bawah kertas struk.</p>
                   <p v-if="form.errors.receipt_footer" class="text-xs text-red-500 mt-1">{{ form.errors.receipt_footer }}</p>
@@ -309,7 +346,7 @@ const saveSettings = () => {
                   <label class="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Lebar Kertas Struk (Thermal)</label>
                   <select 
                     v-model="form.receipt_paper_width"
-                    class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm appearance-none pr-8 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat"
+                    class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm appearance-none pr-8 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat"
                   >
                     <option value="58mm">58mm (Printer Kecil)</option>
                     <option value="80mm">80mm (Printer Standar/Sedang)</option>
@@ -336,7 +373,7 @@ const saveSettings = () => {
                       step="0.01"
                       required
                       placeholder="Masukkan nilai persen (contoh: 11)"
-                      class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm"
+                      class="w-full pl-11 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                     />
                   </div>
                   <p class="text-xxs text-slate-405 dark:text-slate-550 mt-1">Persentase pajak pertambahan nilai otomatis pada hitungan kasir POS.</p>
@@ -346,7 +383,7 @@ const saveSettings = () => {
                 <!-- Low Stock Alert Toggle -->
                 <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-2xl">
                   <div class="flex items-start gap-3">
-                    <AlertCircle class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                    <AlertCircle class="w-5 h-5 text-primary-600 shrink-0 mt-0.5" />
                     <div>
                       <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Notifikasi Stok Menipis</h4>
                       <p class="text-xs text-slate-400 dark:text-slate-500">Tampilkan alarm peringatan stok di dashboard/sidebar bila stok menipis.</p>
@@ -356,9 +393,9 @@ const saveSettings = () => {
                   <button 
                     type="button"
                     @click="form.low_stock_alert = !form.low_stock_alert"
-                    class="text-indigo-600 dark:text-indigo-400 focus:outline-none transition duration-150"
+                    class="text-primary-600 dark:text-primary-400 focus:outline-none transition duration-150"
                   >
-                    <ToggleRight v-if="form.low_stock_alert" class="w-10 h-10 text-indigo-600" />
+                    <ToggleRight v-if="form.low_stock_alert" class="w-10 h-10 text-primary-600" />
                     <ToggleLeft v-else class="w-10 h-10 text-slate-450" />
                   </button>
                 </div>
@@ -370,7 +407,7 @@ const saveSettings = () => {
               <button 
                 type="submit"
                 :disabled="form.processing"
-                class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-lg shadow-indigo-600/10"
+                class="w-full sm:w-auto px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition duration-150 shadow-lg shadow-primary-600/10"
               >
                 {{ form.processing ? 'Menyimpan...' : 'Simpan Semua Pengaturan' }}
               </button>

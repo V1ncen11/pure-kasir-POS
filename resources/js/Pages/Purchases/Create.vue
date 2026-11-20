@@ -269,7 +269,7 @@ const submit = () => {
               </div>
               <div class="flex justify-between items-center pt-2 border-t border-gray-200">
                 <span class="font-semibold">Total Biaya</span>
-                <span class="text-xl font-bold text-blue-600">{{ formatCurrency(totalAmount) }}</span>
+                <span class="text-xl font-bold text-primary-600">{{ formatCurrency(totalAmount) }}</span>
               </div>
             </div>
 
@@ -394,7 +394,7 @@ const submit = () => {
 .search-result-item:last-child { border-bottom: none; }
 .search-item-highlighted {
   background: #f0f7ff !important;
-  border-left: 4px solid #3b82f6 !important;
+  border-left: 4px solid #526d8a !important;
   padding-left: 12px;
 }
 
@@ -409,12 +409,12 @@ const submit = () => {
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 0.875rem; font-weight: 500; color: #475569; }
 .form-control { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; transition: 0.2s; font-family: inherit; width: 100%; box-sizing: border-box; }
-.form-control:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.form-control:focus { outline: none; border-color: #526d8a; box-shadow: 0 0 0 3px rgba(82, 109, 138, 0.12); }
 .text-error { font-size: 0.75rem; color: #ef4444; }
 
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 0.875rem; cursor: pointer; border: none; transition: 0.2s; }
-.btn-primary { background: #2563eb; color: white; }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary { background: #526d8a; color: white; }
+.btn-primary:hover { background: #435a74; }
 .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 
 .btn-icon { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: none; background: transparent; cursor: pointer; transition: 0.2s; }

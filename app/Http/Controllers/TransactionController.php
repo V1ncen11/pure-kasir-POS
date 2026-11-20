@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
@@ -101,30 +102,53 @@ class TransactionController extends Controller
             'password.current_password' => 'Kata sandi yang Anda masukkan salah.',
         ]);
 
-        if ($transaction->status === 'voided') {
-            return back()->with('error', 'Transaksi sudah di-void sebelumnya.');
-        }
+        $alreadyVoided = DB::transaction(function () use ($transaction) {
+            $lockedTransaction = Transaction::whereKey($transaction->id)->lockForUpdate()->firstOrFail();
+            if ($lockedTransaction->status === 'voided') {
+                return true;
+            }
 
-        $transaction->update(['status' => 'voided']);
+            $lockedTransaction->load('items');
+            foreach ($lockedTransaction->items as $item) {
+                if (!$item->product_id) {
+                    continue;
+                }
+                $product = \App\Models\Product::whereKey($item->product_id)->lockForUpdate()->first();
+                if (!$product) {
+                    continue;
+                }
 
-        // Kembalikan stok
-        foreach ($transaction->items as $item) {
-            if ($item->product_id) {
-                $product = $item->product;
-                $before  = $product->stock;
+                $before = $product->stock;
                 $product->increment('stock', $item->qty);
-
                 \App\Models\StockLog::create([
-                    'product_id'     => $product->id,
-                    'user_id'        => auth()->id(),
-                    'transaction_id' => $transaction->id,
-                    'type'           => 'in',
-                    'qty_before'     => $before,
-                    'qty_change'     => $item->qty,
-                    'qty_after'      => $before + $item->qty,
-                    'notes'          => "Void transaksi #{$transaction->invoice_number}",
+                    'product_id' => $product->id,
+                    'user_id' => auth()->id(),
+                    'transaction_id' => $lockedTransaction->id,
+                    'type' => 'in',
+                    'qty_before' => $before,
+                    'qty_change' => $item->qty,
+                    'qty_after' => $before + $item->qty,
+                    'notes' => "Void transaksi #{$lockedTransaction->invoice_number}",
                 ]);
             }
+
+            if ($lockedTransaction->customer_id) {
+                $points = (int) floor((float) $lockedTransaction->total / 10000);
+                if ($points > 0) {
+                    $customer = \App\Models\Customer::whereKey($lockedTransaction->customer_id)->lockForUpdate()->first();
+                    if ($customer) {
+                        $customer->points = max(0, $customer->points - $points);
+                        $customer->save();
+                    }
+                }
+            }
+
+            $lockedTransaction->update(['status' => 'voided']);
+            return false;
+        });
+
+        if ($alreadyVoided) {
+            return back()->with('error', 'Transaksi sudah di-void sebelumnya.');
         }
 
         ActivityLog::log('Void Transaksi', "Membatalkan transaksi {$transaction->invoice_number}.");

@@ -107,7 +107,7 @@ const executeDelete = () => {
               <td>{{ supplier.address || '-' }}</td>
               <td class="text-right">
                 <div class="action-buttons">
-                  <button @click="openModal(supplier)" class="btn-icon text-blue-600 hover:bg-blue-50">
+                  <button @click="openModal(supplier)" class="btn-icon text-primary-600 hover:bg-primary-50">
                     <Edit2 :size="16" />
                   </button>
                   <button @click="confirmDeleteSupplier(supplier)" class="btn-icon text-red-600 hover:bg-red-50">
@@ -212,14 +212,14 @@ const executeDelete = () => {
 
 .action-buttons { display: flex; justify-content: flex-end; gap: 8px; }
 .btn-icon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; border: none; background: transparent; cursor: pointer; transition: 0.2s; }
-.text-blue-600 { color: #2563eb; }
+.text-primary-600 { color: #526d8a; }
 .text-red-600 { color: #dc2626; }
-.hover\:bg-blue-50:hover { background: #eff6ff; }
+.hover\:bg-primary-50:hover { background: #eff6ff; }
 .hover\:bg-red-50:hover { background: #fef2f2; }
 
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 0.875rem; cursor: pointer; border: none; transition: 0.2s; }
-.btn-primary { background: #2563eb; color: white; }
-.btn-primary:hover { background: #1d4ed8; }
+.btn-primary { background: #526d8a; color: white; }
+.btn-primary:hover { background: #435a74; }
 .btn-secondary { background: #f1f5f9; color: #475569; }
 .btn-secondary:hover { background: #e2e8f0; }
 .btn-danger { background: #ef4444; color: white; }
@@ -232,7 +232,7 @@ const executeDelete = () => {
 .form-group { display: flex; flex-direction: column; gap: 8px; }
 .form-group label { font-size: 0.875rem; font-weight: 500; color: #475569; }
 .form-control { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; transition: 0.2s; font-family: inherit; }
-.form-control:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.form-control:focus { outline: none; border-color: #526d8a; box-shadow: 0 0 0 3px rgba(82, 109, 138, 0.12); }
 .text-error { font-size: 0.75rem; color: #ef4444; }
 .modal-footer { margin-top: 8px; display: flex; justify-content: flex-end; gap: 12px; }
 </style>

@@ -14,9 +14,10 @@ class CustomerController extends Controller
     public function index(Request $request): Response
     {
         $customers = Customer::when($request->search, function ($q, $s) {
-                $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('phone', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%");
+                $q->where(fn ($search) => $search
+                    ->where('name', 'like', "%{$s}%")
+                    ->orWhere('phone', 'like', "%{$s}%")
+                    ->orWhere('email', 'like', "%{$s}%"));
             })
             ->withCount('transactions')
             ->latest()

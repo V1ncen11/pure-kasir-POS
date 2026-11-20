@@ -7,6 +7,10 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Bootstrap admin
+
+Pendaftaran publik dinonaktifkan. Untuk membuat admin awal, isi `INITIAL_ADMIN_EMAIL` dan `INITIAL_ADMIN_PASSWORD` (minimal 12 karakter) di `.env`, lalu jalankan `php artisan db:seed --class=DatabaseSeeder`. Seeder tidak mengganti kata sandi akun yang sudah ada. Data contoh produk dan kategori hanya dibuat pada lingkungan `local` atau `testing`.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

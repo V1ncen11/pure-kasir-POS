@@ -24,10 +24,17 @@
         scroll-behavior: smooth;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     }
 
     body {
         @apply bg-slate-50 text-slate-900;
+        font-family: inherit;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+
+    button, input, optgroup, select, textarea {
+        font: inherit;
     }
 
     /* Scrollbar */

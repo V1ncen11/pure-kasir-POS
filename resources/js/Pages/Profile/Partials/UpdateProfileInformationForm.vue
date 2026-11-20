@@ -79,11 +79,11 @@ function getInitials(name) {
             <!-- Foto atau Inisial -->
             <div class="relative">
                 <div v-if="avatarPreview"
-                    class="w-20 h-20 rounded-2xl overflow-hidden ring-2 ring-indigo-200 ring-offset-2 shadow-md">
+                    class="w-20 h-20 rounded-2xl overflow-hidden ring-2 ring-primary-200 ring-offset-2 shadow-md">
                     <img :src="avatarPreview" alt="Foto profil" class="w-full h-full object-cover" />
                 </div>
                 <div v-else
-                    class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center ring-2 ring-indigo-200 ring-offset-2 shadow-md">
+                    class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center ring-2 ring-primary-200 ring-offset-2 shadow-md">
                     <span class="text-white font-bold text-2xl">{{ getInitials(user.name) }}</span>
                 </div>
                 <!-- Badge loading -->
@@ -109,7 +109,7 @@ function getInitials(name) {
                     type="button"
                     @click="triggerAvatarSelect"
                     :disabled="avatarUploading"
-                    class="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition disabled:opacity-50"
+                    class="px-4 py-2 text-xs font-bold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-xl transition disabled:opacity-50"
                 >
                     {{ avatarUploading ? 'Mengupload...' : 'Ganti Foto Profil' }}
                 </button>

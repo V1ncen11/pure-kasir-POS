@@ -52,8 +52,15 @@ class PurchaseController extends Controller
             'items.*.purchase_price' => 'required|numeric|min:0',
         ]);
 
-        try {
-            DB::beginTransaction();
+        $totalAmount = DB::transaction(function () use ($validated) {
+            $quantities = collect($validated['items'])->groupBy('product_id')
+                ->map(fn ($items) => $items->sum('qty'));
+            $products = Product::whereIn('id', $quantities->keys())
+                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+
+            if ($products->count() !== $quantities->count()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['items' => 'Salah satu produk sudah tidak tersedia.']);
+            }
 
             $totalAmount = 0;
             foreach ($validated['items'] as $item) {
@@ -64,9 +71,9 @@ class PurchaseController extends Controller
                 'supplier_id' => $validated['supplier_id'],
                 'user_id' => Auth::id(),
                 'date' => $validated['date'],
-                'reference_no' => $validated['reference_no'],
+                'reference_no' => $validated['reference_no'] ?? null,
                 'total_amount' => $totalAmount,
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -80,33 +87,30 @@ class PurchaseController extends Controller
                     'subtotal' => $subtotal,
                 ]);
 
-                // Update product stock
-                $product = Product::findOrFail($item['product_id']);
-                $qtyBefore = $product->stock;
-                $product->stock += $item['qty'];
-                $product->save();
+            }
 
-                // Create stock log
+            foreach ($quantities as $productId => $qty) {
+                $product = $products->get($productId);
+                $qtyBefore = $product->stock;
+                $qtyAfter = $qtyBefore + $qty;
+                $product->update(['stock' => $qtyAfter]);
                 StockLog::create([
                     'product_id' => $product->id,
                     'user_id' => Auth::id(),
                     'type' => 'in',
                     'qty_before' => $qtyBefore,
-                    'qty_change' => $item['qty'],
-                    'qty_after' => $product->stock,
+                    'qty_change' => $qty,
+                    'qty_after' => $qtyAfter,
                     'notes' => 'Stok Masuk dari Pembelian #' . $purchase->id,
                 ]);
             }
 
-            DB::commit();
+            return $totalAmount;
+        });
 
-            ActivityLog::log('Stok Masuk', "Memasukkan stok barang dari supplier ID {$validated['supplier_id']} senilai Rp " . number_format($totalAmount, 0, ',', '.'));
+        ActivityLog::log('Stok Masuk', "Memasukkan stok barang dari supplier ID {$validated['supplier_id']} senilai Rp " . number_format($totalAmount, 0, ',', '.'));
 
-            return redirect()->route('purchases.index')->with('success', 'Data Stok Masuk berhasil disimpan.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
+        return redirect()->route('purchases.index')->with('success', 'Data Stok Masuk berhasil disimpan.');
     }
 
     public function show(Purchase $purchase)

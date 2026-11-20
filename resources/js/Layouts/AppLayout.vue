@@ -54,6 +54,20 @@ const sidebarOpen      = ref(true)
 const mobileOpen       = ref(false)
 const showLogoutModal  = ref(false)
 
+// Auto close mobile sidebar on navigation
+watch(() => page.url, () => {
+  mobileOpen.value = false
+})
+
+// Lock body scroll when mobile sidebar is open
+watch(mobileOpen, (val) => {
+  if (val) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
 function confirmLogout() {
   router.post(route('logout'))
 }
@@ -185,6 +199,7 @@ function isActive(routeName) {
       v-if="mobileOpen"
       class="mobile-overlay"
       @click="mobileOpen = false"
+      @touchmove.prevent
     />
 
     <!-- Sidebar -->
@@ -194,19 +209,19 @@ function isActive(routeName) {
     >
       <!-- Logo / Store Name -->
       <div class="sidebar__header">
-        <div class="sidebar__logo" :style="settings?.store_logo ? 'background: transparent; width: 48px; height: 48px; min-width: 48px;' : ''">
+        <div class="sidebar__logo" :style="settings?.store_logo ? (sidebarOpen ? 'background: transparent; width: 112px; height: 72px; min-width: 112px;' : 'background: transparent; width: 40px; height: 40px; min-width: 40px;') : ''">
           <img v-if="settings?.store_logo" :src="`/storage/${settings.store_logo}`" :alt="storeName" class="w-full h-full object-contain" />
           <Store v-else :size="22" />
         </div>
         <Transition name="fade-slide">
           <div v-if="sidebarOpen" class="sidebar__brand">
-            <span class="sidebar__brand-name" style="font-weight: 800; color: #1e3a8a; font-size: 0.95rem;">
+            <span class="sidebar__brand-name">
               {{ storeName }}
             </span>
           </div>
         </Transition>
-        <button class="sidebar__toggle" @click="sidebarOpen = !sidebarOpen">
-          <ChevronRight :size="16" :class="{ 'rotate-180': sidebarOpen }" />
+        <button class="sidebar__toggle" @click="sidebarOpen = !sidebarOpen" :class="{ 'is-collapsed': !sidebarOpen }" title="Toggle Sidebar">
+          <component :is="sidebarOpen ? Menu : ChevronRight" :size="18" />
         </button>
       </div>
 
@@ -361,14 +376,17 @@ function isActive(routeName) {
 .app-shell {
   display: flex;
   min-height: 100vh;
-  background-color: #f1f6fb; /* Soft sky blue-gray background */
+  min-height: 100dvh;
+  background-color: #edf2f8;
 }
 
 /* ── Sidebar ── */
 .sidebar {
   width: 260px;
   height: 100vh;
-  background-color: #f4f8fd; /* Soft light blue pastel background */
+  height: 100dvh;
+  bottom: 0;
+  background-color: #657f9b;
   display: flex;
   flex-direction: column;
   transition: width 0.25s ease;
@@ -377,12 +395,25 @@ function isActive(routeName) {
   left: 0;
   z-index: 50;
   overflow: hidden;
-  border-right: 1px solid #d0e1fd; /* Subtle blue border */
-  box-shadow: 2px 0 12px rgba(37, 99, 235, 0.03); /* Extremely soft shadow */
+  border-right: 1px solid #526d8a;
+  box-shadow: 2px 0 12px rgba(25, 42, 60, 0.12);
 }
 
 .sidebar--collapsed {
   width: 72px;
+}
+.sidebar--collapsed .sidebar__header {
+  min-height: 56px;
+  padding: 8px;
+}
+.sidebar--collapsed .sidebar__logo {
+  display: none;
+}
+.sidebar--collapsed .sidebar__toggle {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, -50%);
 }
 
 /* Mobile */
@@ -406,18 +437,21 @@ function isActive(routeName) {
 /* Header */
 .sidebar__header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 20px 16px;
-  border-bottom: 1px solid #e1eefb;
-  min-height: 72px;
+  justify-content: center;
+  position: relative;
+  gap: 8px;
+  padding: 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  min-height: 0;
 }
 
 .sidebar__logo {
   width: 40px;
   height: 40px;
   min-width: 40px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #7187a1, #526d8a);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -425,19 +459,20 @@ function isActive(routeName) {
   color: white;
 }
 
-.sidebar__brand { flex: 1; overflow: hidden; }
+.sidebar__brand { width: 100%; flex: none; overflow: hidden; text-align: center; margin-top: -8px; }
 .sidebar__brand-name {
   display: block;
-  color: #1e3a8a; /* Dark royal blue */
-  font-weight: 700;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .sidebar__brand-sub {
   display: block;
-  color: #0ea5e9; /* Vibrant sky blue */
+  color: #d5dfeb;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -449,22 +484,22 @@ function isActive(routeName) {
   height: 28px;
   min-width: 28px;
   border-radius: 6px;
-  background: #ffffff;
-  border: 1px solid #d0e1fd;
-  color: #64748b;
+  background: transparent;
+  border: none;
+  color: #d5dfeb;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 .sidebar__toggle:hover {
-  background: #e0f2fe;
-  color: #0284c7;
-  border-color: #bae6fd;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
 }
-.sidebar__toggle svg { transition: transform 0.25s ease; }
-.rotate-180 { transform: rotate(180deg); }
 
 @media (max-width: 768px) {
   .sidebar__toggle {
@@ -478,6 +513,7 @@ function isActive(routeName) {
   padding: 12px 8px;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 .sidebar__nav-item {
@@ -487,23 +523,23 @@ function isActive(routeName) {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  color: #475569; /* Slate gray for readability */
+  color: #e3eaf2;
   text-decoration: none;
   transition: all 0.15s ease;
   margin-bottom: 2px;
   white-space: nowrap;
 }
 .sidebar__nav-item:hover {
-  background: #e9f2fc;
-  color: #1e40af;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 .sidebar__nav-item--active {
-  background: #dbeafe; /* Light blue accent */
-  color: #1d4ed8; /* Active royal blue text */
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
   font-weight: 600;
 }
 .sidebar__nav-item--active .sidebar__nav-icon {
-  color: #2563eb;
+  color: #ffffff;
 }
 
 .sidebar__nav-icon {
@@ -512,10 +548,10 @@ function isActive(routeName) {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #c8d5e3;
 }
 .sidebar__nav-item:hover .sidebar__nav-icon {
-  color: #1d4ed8;
+  color: #ffffff;
 }
 
 .sidebar__nav-label {
@@ -564,7 +600,7 @@ function isActive(routeName) {
 /* Footer */
 .sidebar__footer {
   padding: 12px 8px;
-  border-top: 1px solid #e1eefb;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -582,19 +618,19 @@ function isActive(routeName) {
   width: 36px;
   height: 36px;
   min-width: 36px;
-  background: #e0ecfb;
-  border: 1px solid #cce0f9;
-  border-radius: 10px;
+  background: #edf2f6;
+  border: 1px solid #d5dfe8;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
+  color: #526d8a;
   transition: all 0.2s ease;
 }
 .sidebar__user-avatar:hover {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  background: #e3eaf1;
+  color: #526d8a;
+  border-color: #cedae5;
 }
 
 .sidebar__user-info { 
@@ -605,7 +641,7 @@ function isActive(routeName) {
 }
 .sidebar__user-name {
   display: block;
-  color: #1e3a8a; /* Dark navy */
+  color: #ffffff;
   font-size: 0.8rem;
   font-weight: 600;
   white-space: nowrap;
@@ -628,7 +664,7 @@ function isActive(routeName) {
   animation: pulse-dot 2s infinite;
 }
 .sidebar__user-role {
-  color: #64748b;
+  color: #d5dfeb;
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -677,9 +713,8 @@ function isActive(routeName) {
 /* ── Navbar ── */
 .navbar {
   height: 64px;
-  background: rgba(255, 255, 255, 0.85); /* Premium glassmorphism */
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid #d0e1fd;
+  background: #526d8a;
+  border-bottom: 1px solid #435a74;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -687,7 +722,7 @@ function isActive(routeName) {
   position: sticky;
   top: 0;
   z-index: 40;
-  box-shadow: 0 4px 20px -2px rgba(37, 99, 235, 0.04);
+  box-shadow: 0 2px 8px rgba(46, 39, 87, 0.18);
 }
 
 .navbar__left { display: flex; align-items: center; gap: 16px; }
@@ -697,9 +732,9 @@ function isActive(routeName) {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: #f1f5f9;
-  border: none;
-  color: #475569;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -711,7 +746,8 @@ function isActive(routeName) {
 .navbar__page-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .navbar__right { display: flex; align-items: center; gap: 12px; }
@@ -748,9 +784,9 @@ function isActive(routeName) {
   width: 38px;
   height: 38px;
   border-radius: 8px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #d97706;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #fde68a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -758,7 +794,7 @@ function isActive(routeName) {
   transition: all 0.15s ease;
   text-decoration: none;
 }
-.navbar__alert-btn:hover { background: #fef3c7; }
+.navbar__alert-btn:hover { background: rgba(255, 255, 255, 0.1); }
 
 .navbar__alert-badge {
   position: absolute;
@@ -784,23 +820,23 @@ function isActive(routeName) {
 .navbar__user-avatar {
   width: 36px;
   height: 36px;
-  background: #e0ecfb;
-  border: 1px solid #cce0f9;
-  border-radius: 10px;
+  background: #edf2f6;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
+  color: #526d8a;
   transition: all 0.2s ease;
 }
 .navbar__user-avatar:hover {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  background: #ffffff;
+  color: #435a74;
+  border-color: #ffffff;
 }
 .navbar__user-meta { display: flex; flex-direction: column; }
-.navbar__user-name { font-size: 0.8rem; font-weight: 600; color: #0f172a; }
-.navbar__user-role { font-size: 0.7rem; color: #94a3b8; }
+.navbar__user-name { font-size: 0.8rem; font-weight: 600; color: #ffffff; }
+.navbar__user-role { font-size: 0.7rem; color: #c8d5e8; }
 
 @media (max-width: 640px) {
   .navbar__user-meta { display: none; }
@@ -809,7 +845,7 @@ function isActive(routeName) {
 /* ── Page Content ── */
 .page-content {
   flex: 1;
-  padding: 24px;
+  padding: 22px;
 }
 
 @media (max-width: 640px) {

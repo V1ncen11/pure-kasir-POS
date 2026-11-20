@@ -14,8 +14,9 @@ class ActivityLogController extends Controller
     {
         $logs = ActivityLog::with('user:id,name,role')
             ->when($request->search, fn($q, $s) =>
-                $q->where('activity', 'like', "%$s%")
-                  ->orWhere('description', 'like', "%$s%")
+                $q->where(fn ($search) => $search
+                    ->where('activity', 'like', "%$s%")
+                    ->orWhere('description', 'like', "%$s%"))
             )
             ->when($request->user_id, fn($q, $u) => $q->where('user_id', $u))
             ->when($request->date_from, fn($q, $d) => $q->whereDate('created_at', '>=', $d))

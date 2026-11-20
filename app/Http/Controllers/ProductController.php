@@ -19,9 +19,10 @@ class ProductController extends Controller
     {
         $products = Product::with('category')
             ->when($request->search, fn($q, $s) =>
-                $q->where('name', 'like', "%$s%")
-                  ->orWhere('sku', 'like', "%$s%")
-                  ->orWhere('barcode', 'like', "%$s%")
+                $q->where(fn ($search) => $search
+                    ->where('name', 'like', "%$s%")
+                    ->orWhere('sku', 'like', "%$s%")
+                    ->orWhere('barcode', 'like', "%$s%"))
             )
             ->when($request->category, fn($q, $c) => $q->where('category_id', $c))
             ->when($request->low_stock, fn($q) => $q->whereColumn('stock', '<=', 'min_stock'))
@@ -133,6 +134,10 @@ class ProductController extends Controller
             'image'       => 'nullable|image|max:2048',
         ]);
 
+        if ((float) $data['sell_price'] < (float) $data['buy_price']) {
+            return back()->withErrors(['sell_price' => 'Harga jual tidak boleh lebih rendah dari harga beli.'])->withInput();
+        }
+
         // Cek duplikasi barcode secara manual untuk memunculkan nama produk yang bentrok
         if (!empty($data['barcode'])) {
             $existing = Product::where('barcode', $data['barcode'])
@@ -184,29 +189,25 @@ class ProductController extends Controller
             'notes' => 'required|string|max:500',
         ]);
 
-        $before = $product->stock;
+        [$before, $after] = \Illuminate\Support\Facades\DB::transaction(function () use ($product, $data) {
+            $lockedProduct = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+            $before = $lockedProduct->stock;
+            $after = $data['type'] === 'in' ? $before + $data['qty'] : $data['qty'];
+            $change = $after - $before;
 
-        if ($data['type'] === 'in') {
-            // Tambah stok: after = before + qty
-            $after  = $before + $data['qty'];
-            $change = $data['qty'];
-        } else {
-            // Koreksi stok (adjustment): qty adalah nilai stok fisik baru
-            $after  = $data['qty'];
-            $change = $data['qty'] - $before; // bisa negatif jika koreksi turun
-        }
+            $lockedProduct->update(['stock' => $after]);
+            StockLog::create([
+                'product_id' => $lockedProduct->id,
+                'user_id' => auth()->id(),
+                'type' => $data['type'],
+                'qty_before' => $before,
+                'qty_change' => $change,
+                'qty_after' => $after,
+                'notes' => $data['notes'],
+            ]);
 
-        $product->update(['stock' => $after]);
-
-        StockLog::create([
-            'product_id' => $product->id,
-            'user_id'    => auth()->id(),
-            'type'       => $data['type'],
-            'qty_before' => $before,
-            'qty_change' => $change,
-            'qty_after'  => $after,
-            'notes'      => $data['notes'],
-        ]);
+            return [$before, $after];
+        });
 
         $typeLabel = $data['type'] === 'in' ? 'Stok Masuk' : 'Koreksi Stok';
         ActivityLog::log('Penyesuaian Stok', "{$typeLabel} produk '{$product->name}': {$before} → {$after} ({$data['notes']})");

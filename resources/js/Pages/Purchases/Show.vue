@@ -124,7 +124,7 @@ const printInvoice = () => {
           <tfoot>
             <tr>
               <td colspan="4" class="text-right font-bold py-4">Total Keseluruhan</td>
-              <td class="text-right font-bold text-lg text-blue-600 py-4">{{ formatCurrency(purchase.total_amount) }}</td>
+              <td class="text-right font-bold text-lg text-primary-600 py-4">{{ formatCurrency(purchase.total_amount) }}</td>
             </tr>
           </tfoot>
         </table>
@@ -162,7 +162,7 @@ const printInvoice = () => {
 .text-gray-700 { color: #334155; }
 .text-gray-600 { color: #475569; }
 .text-gray-500 { color: #64748b; }
-.text-blue-600 { color: #2563eb; }
+.text-primary-600 { color: #526d8a; }
 .py-4 { padding-top: 16px; padding-bottom: 16px; }
 
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 0.875rem; cursor: pointer; border: none; transition: 0.2s; }
@@ -177,7 +177,7 @@ const printInvoice = () => {
 
 .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px; }
 .info-box { display: flex; gap: 16px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #f1f5f9; }
-.info-box-icon { width: 40px; height: 40px; border-radius: 8px; background: white; color: #3b82f6; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); flex-shrink: 0; }
+.info-box-icon { width: 40px; height: 40px; border-radius: 8px; background: white; color: #526d8a; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); flex-shrink: 0; }
 .info-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 600; margin-bottom: 4px; }
 .info-value { font-weight: 600; color: #0f172a; }
 

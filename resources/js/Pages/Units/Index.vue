@@ -202,7 +202,7 @@ const executeDelete = () => {
 .stats-num {
   font-size: 1rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #526d8a;
   margin-right: 4px;
 }
 
@@ -212,7 +212,7 @@ const executeDelete = () => {
   align-items: center;
   gap: 6px;
   padding: 9px 16px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #526d8a, #526d8a);
   color: white;
   border: none;
   border-radius: 10px;
@@ -224,7 +224,7 @@ const executeDelete = () => {
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 .btn-add:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, #526d8a, #435a74);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
 }
@@ -279,7 +279,7 @@ const executeDelete = () => {
   background: transparent;
 }
 .unit-btn-edit { color: #64748b; }
-.unit-btn-edit:hover { background: #eff6ff; color: #2563eb; }
+.unit-btn-edit:hover { background: #eff6ff; color: #526d8a; }
 .unit-btn-delete { color: #94a3b8; }
 .unit-btn-delete:hover { background: #fef2f2; color: #ef4444; }
 
@@ -359,7 +359,7 @@ const executeDelete = () => {
   transition: all 0.15s;
   outline: none;
 }
-.field-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12); }
+.field-input:focus { border-color: #526d8a; box-shadow: 0 0 0 3px rgba(82, 109, 138, 0.12); }
 .field-input--error { border-color: #ef4444; }
 .field-error { font-size: 0.75rem; color: #ef4444; }
 .modal-ft {
@@ -411,7 +411,7 @@ const executeDelete = () => {
 .btn-cancel:hover { background: #e2e8f0; }
 .btn-save {
   padding: 9px 16px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #526d8a, #526d8a);
   color: white;
   border: none;
   border-radius: 10px;
@@ -421,7 +421,7 @@ const executeDelete = () => {
   transition: 0.15s;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
-.btn-save:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.btn-save:hover { background: linear-gradient(135deg, #526d8a, #435a74); }
 .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-delete {
   padding: 9px 16px;

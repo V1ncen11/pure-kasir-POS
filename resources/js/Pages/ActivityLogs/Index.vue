@@ -53,7 +53,7 @@ function getActivityMeta(activity) {
     return { bg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400', icon: ShoppingCart }
   }
   if (lower.includes('produk')) {
-    return { bg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400', icon: Package }
+    return { bg: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-400', icon: Package }
   }
   if (lower.includes('kategori')) {
     return { bg: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400', icon: Tag }
@@ -109,14 +109,14 @@ const hasFilters = () => search.value || userId.value || dateFrom.value || dateT
               v-model="search"
               type="text"
               placeholder="Cari aktivitas..."
-              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
             />
           </div>
 
           <!-- User filter -->
           <select
             v-model="userId"
-            class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
           >
             <option value="">Semua Pengguna</option>
             <option v-for="u in users" :key="u.id" :value="u.id">
@@ -128,7 +128,7 @@ const hasFilters = () => search.value || userId.value || dateFrom.value || dateT
           <input
             v-model="dateFrom"
             type="date"
-            class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            class="w-full px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
           />
 
           <!-- Date to -->
@@ -136,7 +136,7 @@ const hasFilters = () => search.value || userId.value || dateFrom.value || dateT
             <input
               v-model="dateTo"
               type="date"
-              class="flex-1 px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              class="flex-1 px-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
             />
             <button
               v-if="hasFilters()"
@@ -198,8 +198,8 @@ const hasFilters = () => search.value || userId.value || dateFrom.value || dateT
                 <!-- User -->
                 <td class="py-4 px-5">
                   <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center shrink-0">
-                      <User class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    <div class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center shrink-0">
+                      <User class="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <div>
                       <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ log.user.name }}</p>
@@ -210,7 +210,7 @@ const hasFilters = () => search.value || userId.value || dateFrom.value || dateT
 
                 <!-- IP -->
                 <td class="py-4 px-5">
-                  <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{ log.ip_address || '-' }}</span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400">{{ log.ip_address || '-' }}</span>
                 </td>
 
                 <!-- Timestamp -->
