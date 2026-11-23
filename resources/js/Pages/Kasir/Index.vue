@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
+import { useForm, usePage, router } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
 import JsBarcode from 'jsbarcode'
@@ -26,6 +26,51 @@ const settings = computed(() => page.props.settings)
 const searchQuery      = ref('')
 const searchInput      = ref(null)
 const selectedCategory = ref(null)
+const categoryTabs = ref(null)
+let categoryDragStart = null
+let suppressCategoryClick = false
+
+function startCategoryDrag(event) {
+  if (event.button !== 0 || !categoryTabs.value) return
+
+  categoryDragStart = {
+    x: event.clientX,
+    scrollLeft: categoryTabs.value.scrollLeft,
+    moved: false,
+  }
+}
+
+function dragCategoryTabs(event) {
+  if (!categoryDragStart || !categoryTabs.value) return
+
+  const distance = event.clientX - categoryDragStart.x
+  if (Math.abs(distance) > 4) {
+    categoryDragStart.moved = true
+    categoryTabs.value.classList.add('is-dragging')
+    categoryTabs.value.scrollLeft = categoryDragStart.scrollLeft - distance
+  }
+}
+
+function stopCategoryDrag() {
+  if (!categoryDragStart) return
+
+  if (categoryDragStart.moved) {
+    suppressCategoryClick = true
+    setTimeout(() => { suppressCategoryClick = false }, 120)
+  }
+
+  categoryDragStart = null
+  categoryTabs.value?.classList.remove('is-dragging')
+}
+
+function selectCategory(categoryId) {
+  if (suppressCategoryClick) {
+    suppressCategoryClick = false
+    return
+  }
+
+  selectedCategory.value = categoryId
+}
 
 const filteredProducts = computed(() => {
   let list = props.products || []
@@ -675,6 +720,7 @@ async function submitTransaction() {
     selectedCustomer.value = null
 
     toast.success('Transaksi berhasil!')
+    router.reload({ only: ['products'], preserveScroll: true })
   } catch (e) {
     toast.error('Gagal menyimpan transaksi')
     console.error(e)
@@ -794,12 +840,20 @@ function renderBarcode(el, value) {
         <!-- Catalog Container -->
         <div class="catalog-container">
           <!-- Category Tabs -->
-          <div class="category-tabs">
+          <div
+            ref="categoryTabs"
+            class="category-tabs"
+            @mousedown="startCategoryDrag"
+            @mousemove="dragCategoryTabs"
+            @mouseup="stopCategoryDrag"
+            @mouseleave="stopCategoryDrag"
+            @wheel.prevent="categoryTabs.scrollLeft += $event.deltaY || $event.deltaX"
+          >
             <button
               type="button"
               class="category-tab"
               :class="{ 'category-tab--active': selectedCategory === null }"
-              @click="selectedCategory = null"
+              @click="selectCategory(null)"
             >
               Semua Produk
             </button>
@@ -809,7 +863,7 @@ function renderBarcode(el, value) {
               type="button"
               class="category-tab"
               :class="{ 'category-tab--active': selectedCategory === cat.id }"
-              @click="selectedCategory = cat.id"
+              @click="selectCategory(cat.id)"
             >
               {{ cat.name }}
             </button>
@@ -1510,6 +1564,26 @@ function renderBarcode(el, value) {
   .pos-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
 }
 
+/* Keep the POS page scrollable when a phone browser uses a desktop-width viewport. */
+@media (hover: none) and (pointer: coarse) {
+  .pos-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100dvh - 88px);
+    overflow: visible;
+  }
+  .pos-left,
+  .catalog-container,
+  .catalog-grid,
+  .pos-right {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .catalog-container,
+  .catalog-grid { flex: none; }
+}
+
 /* ── Left ── */
 .pos-left {
   display: flex;
@@ -1535,6 +1609,14 @@ function renderBarcode(el, value) {
   padding-bottom: 6px;
   scrollbar-width: thin;
   flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.category-tabs.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
 }
 .category-tabs::-webkit-scrollbar {
   height: 4px;
@@ -1548,6 +1630,7 @@ function renderBarcode(el, value) {
 }
 
 .category-tab {
+  flex: 0 0 auto;
   padding: 6px 12px;
   background: #f1f5f9;
   color: #475569;
@@ -2188,6 +2271,58 @@ function renderBarcode(el, value) {
 .camera-scan-hint, .camera-scan-error { margin: 0; font-size: 0.85rem; line-height: 1.5; }
 .camera-scan-hint { color: #64748b; }
 .camera-scan-error { color: #b91c1c; background: #fef2f2; padding: 10px 12px; border-radius: 10px; }
+
+/* Keep the cart and payment controls beside the catalog on wide tablets. */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (min-width: 900px) and (min-height: 500px) {
+  .pos-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    height: calc(100dvh - 88px);
+    min-height: 0;
+    overflow: hidden;
+  }
+  .pos-left,
+  .pos-right {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .catalog-container {
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+    flex: 1;
+  }
+  .catalog-grid {
+    height: auto;
+    min-height: 0;
+    overflow-y: auto;
+    flex: 1;
+  }
+}
+
+/* Phone landscape has enough width for two columns, but needs page scrolling. */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (min-width: 700px) and (max-height: 499px) {
+  .pos-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    align-items: start;
+  }
+  .pos-left,
+  .pos-right {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .catalog-container,
+  .catalog-grid {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    flex: none;
+  }
+}
 
 @media (max-width: 640px) {
   .camera-scan-trigger { padding: 0 10px; }

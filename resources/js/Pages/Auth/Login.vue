@@ -1,14 +1,11 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref, watch } from 'vue';
 import { Eye, EyeOff } from '@lucide/vue';
 
 defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
     status: {
         type: String,
     },
@@ -86,9 +83,6 @@ const submit = () => {
         <div class="w-full lg:w-1/2 min-h-screen flex items-center justify-center px-6 py-24 sm:px-12 lg:px-20 bg-white relative">
 
             <!-- Mobile Brand Header (Visible only on lg:hidden) -->
-            <div class="absolute top-6 left-6 flex items-center lg:hidden">
-                <span class="text-base font-bold text-primary-900 tracking-tight">Warung Teh Ucu</span>
-            </div>
 
             <!-- Login Form -->
             <div class="w-full max-w-[790px]">
@@ -96,7 +90,7 @@ const submit = () => {
                 <!-- Form Header -->
                 <div class="text-center mb-9">
                     <h2 class="text-2xl sm:text-3xl font-bold text-slate-950 tracking-tight">
-                        Masuk ke Kasir POS
+                        Login K-POS
                     </h2>
                     <p class="text-slate-500 text-base mt-2 leading-relaxed">
                         Masukkan email dan kata sandi untuk melanjutkan.
@@ -224,20 +218,8 @@ const submit = () => {
                     </button>
 
                 </form>
-
-                <div class="mt-7 text-center">
-                    <Link
-                        v-if="canResetPassword"
-                        :href="route('password.request')"
-                        class="text-base text-primary-600 hover:text-primary-800 transition-colors font-semibold"
-                    >
-                        Lupa kata sandi?
-                    </Link>
-                </div>
             </div>
         </div>
 
     </div>
 </template>
-
-

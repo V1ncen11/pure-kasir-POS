@@ -19,7 +19,8 @@ class DashboardController extends Controller
 
         // Today's summary
         $todayQuery = Transaction::where('status', 'completed')
-            ->whereDate('created_at', $today);
+            ->whereDate('created_at', $today)
+            ->when(!$isAdmin, fn($q) => $q->where('cashier_id', $user->id));
 
         $todaySales  = (clone $todayQuery)->sum('total');
         $todayCount  = (clone $todayQuery)->count();
@@ -79,7 +80,10 @@ class DashboardController extends Controller
         // Recent transactions
         $recentTransactions = Transaction::with(['cashier', 'items'])
             ->where('status', 'completed')
-            ->when(!$isAdmin, fn($q) => $q->whereDate('created_at', $today))
+            ->when(!$isAdmin, fn($q) => $q
+                ->where('cashier_id', $user->id)
+                ->whereDate('created_at', $today)
+            )
             ->latest()
             ->take(8)
             ->get()

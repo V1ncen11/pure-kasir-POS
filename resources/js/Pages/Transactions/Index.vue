@@ -12,8 +12,7 @@ const debounce = (fn, delay) => {
 }
 import { 
   Search, Calendar, Filter, FileText, X, Eye, 
-  Slash, AlertOctagon, CheckCircle2, RotateCcw,
-  CreditCard, Wallet, Banknote
+  AlertOctagon, RotateCcw, CreditCard, Banknote, QrCode
 } from '@lucide/vue'
 
 const props = defineProps({
@@ -81,7 +80,6 @@ const performVoid = () => {
     password: voidPassword.value
   }, {
     onSuccess: () => {
-      toast.success(`Transaksi ${voidTarget.value.invoice_number} berhasil di-void`)
       voidTarget.value = null
       voidPassword.value = ''
     },
@@ -101,7 +99,7 @@ const performVoid = () => {
         <div>
           <h1 class="text-3xl font-bold tracking-tight text-primary-800 dark:text-white">Riwayat Transaksi</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {{ isAdmin ? 'Kelola dan pantau seluruh transaksi penjualan toko.' : 'Daftar transaksi penjualan hari ini.' }}
+            {{ isAdmin ? 'Kelola dan pantau seluruh transaksi penjualan toko.' : 'Daftar transaksi penjualan Anda hari ini.' }}
           </p>
         </div>
 
@@ -200,14 +198,14 @@ const performVoid = () => {
           <table class="w-full border-collapse text-left">
             <thead>
               <tr class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700">
-                <th class="py-4 px-6 text-sm font-semibold">Nomor Invoice</th>
-                <th class="py-4 px-6 text-sm font-semibold">Tanggal & Waktu</th>
-                <th class="py-4 px-6 text-sm font-semibold">Kasir</th>
-                <th class="py-4 px-6 text-sm font-semibold text-center">Item</th>
-                <th class="py-4 px-6 text-sm font-semibold">Total Belanja</th>
-                <th class="py-4 px-6 text-sm font-semibold">Pembayaran</th>
-                <th class="py-4 px-6 text-sm font-semibold">Status</th>
-                <th class="py-4 px-6 text-sm font-semibold text-right">Aksi</th>
+                <th class="py-4 px-4 text-sm font-semibold">Nomor Invoice</th>
+                <th class="py-4 px-4 text-sm font-semibold">Tanggal & Waktu</th>
+                <th v-if="isAdmin" class="py-4 px-4 text-sm font-semibold">Kasir</th>
+                <th class="py-4 px-4 text-sm font-semibold text-center">Item</th>
+                <th class="py-4 px-4 text-sm font-semibold">Total Belanja</th>
+                <th class="py-4 px-4 text-sm font-semibold">Pembayaran</th>
+                <th class="py-4 px-4 text-sm font-semibold">Status</th>
+                <th class="py-4 px-4 text-sm font-semibold text-right">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -217,7 +215,7 @@ const performVoid = () => {
                 class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition duration-150"
               >
                 <!-- Invoice -->
-                <td class="py-4 px-6">
+                <td class="py-4 px-4">
                   <div class="font-semibold text-primary-700 dark:text-primary-300 flex items-center gap-1.5">
                     <FileText class="w-4 h-4 text-slate-400" />
                     <span>{{ t.invoice_number }}</span>
@@ -225,24 +223,23 @@ const performVoid = () => {
                 </td>
 
                 <!-- Date -->
-                <td class="py-4 px-6 text-slate-700 dark:text-slate-300 text-sm">
-                  {{ t.created_at }}
+                <td class="py-4 px-4 text-sm">
+                  <span class="text-slate-700 dark:text-slate-300">{{ t.created_at.split(' ')[0] }}</span>
+                  <span class="ml-1.5 text-slate-400 dark:text-slate-500">{{ t.created_at.split(' ')[1] }}</span>
                 </td>
 
                 <!-- Cashier -->
-                <td class="py-4 px-6">
+                <td v-if="isAdmin" class="py-4 px-4">
                   <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">{{ t.cashier_name }}</span>
                 </td>
 
                 <!-- Items Count -->
-                <td class="py-4 px-6 text-center">
-                  <span class="inline-flex items-center justify-center px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                    {{ t.items_count }}
-                  </span>
+                <td class="py-4 px-4 text-center text-sm text-slate-600 dark:text-slate-300">
+                  {{ t.items_count }} item
                 </td>
 
                 <!-- Total -->
-                <td class="py-4 px-6">
+                <td class="py-4 px-4">
                   <span class="font-bold text-slate-900 dark:text-white">{{ formatRupiah(t.total) }}</span>
                   <div v-if="t.discount > 0" class="text-xs text-red-500 dark:text-red-400 flex items-center gap-1 mt-0.5">
                     <span>Diskon: {{ formatRupiah(t.discount) }}</span>
@@ -250,35 +247,30 @@ const performVoid = () => {
                 </td>
 
                 <!-- Payment Method -->
-                <td class="py-4 px-6">
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
-                    :class="{
-                      'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400': t.payment_method === 'cash',
-                      'bg-sky-50 text-sky-700 dark:bg-sky-950/20 dark:text-sky-400': t.payment_method === 'transfer',
-                      'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300': t.payment_method === 'qris'
-                    }"
-                  >
-                    <Banknote v-if="t.payment_method === 'cash'" class="w-3.5 h-3.5" />
-                    <CreditCard v-else-if="t.payment_method === 'transfer'" class="w-3.5 h-3.5" />
-                    <Wallet v-else class="w-3.5 h-3.5" />
-                    <span class="capitalize">{{ t.payment_method === 'cash' ? 'Tunai' : t.payment_method }}</span>
+                <td class="py-4 px-4">
+                  <span class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <Banknote v-if="t.payment_method === 'cash'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <CreditCard v-else-if="t.payment_method === 'transfer'" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                    <QrCode v-else class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                    <span>{{ t.payment_method === 'cash' ? 'Tunai' : t.payment_method === 'qris' ? 'QRIS' : 'Transfer' }}</span>
                   </span>
                 </td>
 
                 <!-- Status -->
-                <td class="py-4 px-6">
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+                <td class="py-4 px-4">
+                  <span class="inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold"
+                    :title="t.status === 'completed' ? 'Transaksi selesai' : 'Transaksi dibatalkan (void)'"
                     :class="t.status === 'completed'
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' 
-                      : 'bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400'"
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : 'text-rose-700 dark:text-rose-400'"
                   >
-                    <span class="w-1.5 h-1.5 rounded-full" :class="t.status === 'completed' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
-                    <span>{{ t.status === 'completed' ? 'Selesai' : 'Void (Batal)' }}</span>
+                    <span class="w-2 h-2 rounded-full" :class="t.status === 'completed' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                    <span>{{ t.status === 'completed' ? 'Selesai' : 'Void' }}</span>
                   </span>
                 </td>
 
                 <!-- Actions -->
-                <td class="py-4 px-6 text-right">
+                <td class="py-4 px-4 text-right">
                   <div class="flex items-center justify-end gap-2">
                     <Link 
                       :href="route('transactions.show', t.id)"
@@ -302,7 +294,7 @@ const performVoid = () => {
 
               <!-- Empty State -->
               <tr v-if="transactions.data.length === 0">
-                <td colspan="8" class="py-16 text-center">
+                <td :colspan="isAdmin ? 8 : 7" class="py-16 text-center">
                   <div class="max-w-xs mx-auto">
                     <div class="inline-flex p-4 rounded-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 mb-4 animate-pulse">
                       <AlertOctagon class="w-10 h-10" />

@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { Head, Link } from '@inertiajs/vue3'
-import { ArrowLeft, Printer, Calendar, User, Truck, FileText } from '@lucide/vue'
+import { ArrowLeft, Printer, Calendar, User, Truck, FileText, Pencil } from '@lucide/vue'
 
 const props = defineProps({
   purchase: Object
@@ -41,9 +41,14 @@ const printInvoice = () => {
           <p class="page-subtitle">Lihat rincian transaksi pembelian stok</p>
         </div>
       </div>
-      <button @click="printInvoice" class="btn btn-secondary">
-        <Printer :size="18" /> Cetak
-      </button>
+      <div class="flex items-center gap-2">
+        <Link :href="route('purchases.edit', purchase.id)" class="btn btn-secondary">
+          <Pencil :size="16" /> Edit Stok Masuk
+        </Link>
+        <button @click="printInvoice" class="btn btn-secondary">
+          <Printer :size="18" /> Cetak
+        </button>
+      </div>
     </div>
 
     <div class="invoice-container">
@@ -100,13 +105,20 @@ const printInvoice = () => {
       <div class="mt-8">
         <h3 class="text-lg font-bold mb-4">Rincian Barang</h3>
         <table class="table-invoice">
+          <colgroup>
+            <col style="width: 5%">
+            <col style="width: 40%">
+            <col style="width: 10%">
+            <col style="width: 20%">
+            <col style="width: 25%">
+          </colgroup>
           <thead>
             <tr>
-              <th width="50">No</th>
+              <th>No</th>
               <th>Nama Produk</th>
-              <th class="text-center" width="100">Qty</th>
-              <th class="text-right" width="200">Harga Beli</th>
-              <th class="text-right" width="200">Subtotal</th>
+              <th class="text-center">Qty</th>
+              <th class="text-right">Harga Beli</th>
+              <th class="text-right">Subtotal</th>
             </tr>
           </thead>
           <tbody>
@@ -192,7 +204,56 @@ const printInvoice = () => {
 @media print {
   .no-print { display: none !important; }
   body { background: white; }
-  .invoice-container { box-shadow: none; border: none; padding: 0; margin: 0; }
-  .info-box { border: 1px solid #e2e8f0; }
+  .invoice-container {
+    width: 100% !important;
+    max-width: 190mm;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 10mm !important;
+    margin: 0 auto !important;
+  }
+  .invoice-header {
+    align-items: flex-start;
+    margin-bottom: 8mm;
+    padding-bottom: 5mm;
+  }
+  .info-grid {
+    grid-template-columns: 1.25fr 1fr 1fr;
+    gap: 3mm;
+    margin-bottom: 8mm;
+  }
+  .info-box {
+    min-width: 0;
+    gap: 3mm;
+    padding: 3mm;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    break-inside: avoid;
+  }
+  .info-box-icon { width: 8mm; height: 8mm; }
+  .info-box > div:last-child { min-width: 0; overflow-wrap: anywhere; }
+  .table-invoice {
+    width: 100%;
+    table-layout: fixed;
+    font-size: 10pt;
+  }
+  .table-invoice th,
+  .table-invoice td {
+    padding: 3mm 2mm;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+  }
+  .table-invoice col:nth-child(1) { width: 5%; }
+  .table-invoice col:nth-child(2) { width: 40%; }
+  .table-invoice col:nth-child(3) { width: 10%; }
+  .table-invoice col:nth-child(4) { width: 20%; }
+  .table-invoice col:nth-child(5) { width: 25%; }
+  .table-invoice td:nth-child(3),
+  .table-invoice td:nth-child(4),
+  .table-invoice td:nth-child(5) { white-space: nowrap; }
+  .table-invoice th { white-space: nowrap; }
+  .table-invoice tbody tr { break-inside: avoid; }
+  .table-invoice tfoot td:last-child { white-space: nowrap; }
 }
 </style>

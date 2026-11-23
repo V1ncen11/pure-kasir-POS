@@ -399,7 +399,7 @@ const performDelete = () => {
                   :type="showPassword ? 'text' : 'password'"
                   :required="!isEdit"
                   placeholder="Minimal 8 karakter"
-                  class="w-full px-4 pr-10 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
+                  class="password-input-no-reveal w-full px-4 pr-10 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-sm"
                 />
                 <button
                   v-if="form.password"

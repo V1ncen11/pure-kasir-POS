@@ -157,3 +157,9 @@
     100% { transform: scale(1); opacity: 1; }
 }
 
+/* Hide Edge's built-in password reveal control when a custom toggle is present. */
+input.password-input-no-reveal::-ms-reveal,
+input.password-input-no-reveal::-ms-clear {
+    display: none;
+}
+

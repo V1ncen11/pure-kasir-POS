@@ -134,7 +134,10 @@ class ProductController extends Controller
             'image'       => 'nullable|image|max:2048',
         ]);
 
-        if ((float) $data['sell_price'] < (float) $data['buy_price']) {
+        $pricesChanged = (float) $data['buy_price'] !== (float) $product->buy_price
+            || (float) $data['sell_price'] !== (float) $product->sell_price;
+
+        if ($pricesChanged && (float) $data['sell_price'] < (float) $data['buy_price']) {
             return back()->withErrors(['sell_price' => 'Harga jual tidak boleh lebih rendah dari harga beli.'])->withInput();
         }
 

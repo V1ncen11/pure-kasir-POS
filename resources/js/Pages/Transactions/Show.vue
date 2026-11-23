@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { Link } from '@inertiajs/vue3'
-import { ArrowLeft, Printer, AlertTriangle, CheckCircle2, RotateCcw, Wallet, Banknote, CreditCard, Globe } from '@lucide/vue'
+import { ArrowLeft, Printer, AlertTriangle, Banknote, CreditCard, QrCode, Globe } from '@lucide/vue'
 import { useToast } from 'vue-toastification'
 import { usePage } from '@inertiajs/vue3'
 
@@ -66,14 +66,15 @@ const printReceipt = () => {
               <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Nomor Invoice</span>
               <div class="flex items-center gap-3">
                 <h2 class="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ transaction.invoice_number }}</h2>
-                <span 
-                  class="px-3 py-1.5 rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-sm flex items-center gap-1.5 no-print"
+                <span
+                  class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider no-print"
+                  :title="transaction.status === 'completed' ? 'Transaksi selesai' : 'Transaksi dibatalkan (void)'"
                   :class="transaction.status === 'completed'
-                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' 
-                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400'"
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-rose-700 dark:text-rose-400'"
                 >
-                  <span class="w-1.5 h-1.5 rounded-full" :class="transaction.status === 'completed' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
-                  {{ transaction.status === 'completed' ? 'Lunas' : 'Void / Batal' }}
+                  <span class="w-2 h-2 rounded-full" :class="transaction.status === 'completed' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                  {{ transaction.status === 'completed' ? 'Selesai' : 'Void' }}
                 </span>
               </div>
             </div>
@@ -103,11 +104,11 @@ const printReceipt = () => {
           <div class="space-y-4 md:text-right flex flex-col md:items-end justify-end">
             <div class="w-full md:max-w-xs">
               <span class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1 md:text-right">Metode Pembayaran</span>
-              <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300">
-                <Banknote v-if="transaction.payment_method === 'cash'" class="w-4 h-4 text-emerald-500" />
-                <CreditCard v-else-if="transaction.payment_method === 'transfer'" class="w-4 h-4 text-sky-500" />
-                <Wallet v-else class="w-4 h-4 text-primary-500" />
-                <span class="capitalize">{{ transaction.payment_method === 'cash' ? 'Tunai' : transaction.payment_method }}</span>
+              <div class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <Banknote v-if="transaction.payment_method === 'cash'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <CreditCard v-else-if="transaction.payment_method === 'transfer'" class="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                <QrCode v-else class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                <span>{{ transaction.payment_method === 'cash' ? 'Tunai' : transaction.payment_method === 'qris' ? 'QRIS' : 'Transfer' }}</span>
               </div>
             </div>
 

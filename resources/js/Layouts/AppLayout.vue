@@ -72,6 +72,15 @@ function confirmLogout() {
   router.post(route('logout'))
 }
 
+function toggleSidebar() {
+  if (mobileOpen.value) {
+    mobileOpen.value = false
+    return
+  }
+
+  sidebarOpen.value = !sidebarOpen.value
+}
+
 const storeName = computed(() => settings.value?.store_name ?? 'Kasir POS')
 
 const formattedStoreName = computed(() => {
@@ -205,23 +214,23 @@ function isActive(routeName) {
     <!-- Sidebar -->
     <aside
       class="sidebar"
-      :class="{ 'sidebar--collapsed': !sidebarOpen, 'sidebar--mobile-open': mobileOpen }"
+      :class="{ 'sidebar--collapsed': !sidebarOpen && !mobileOpen, 'sidebar--mobile-open': mobileOpen }"
     >
       <!-- Logo / Store Name -->
       <div class="sidebar__header">
-        <div class="sidebar__logo" :style="settings?.store_logo ? (sidebarOpen ? 'background: transparent; width: 112px; height: 72px; min-width: 112px;' : 'background: transparent; width: 40px; height: 40px; min-width: 40px;') : ''">
+        <div class="sidebar__logo" :style="settings?.store_logo ? ((sidebarOpen || mobileOpen) ? 'background: transparent; width: 112px; height: 72px; min-width: 112px;' : 'background: transparent; width: 40px; height: 40px; min-width: 40px;') : ''">
           <img v-if="settings?.store_logo" :src="`/storage/${settings.store_logo}`" :alt="storeName" class="w-full h-full object-contain" />
           <Store v-else :size="22" />
         </div>
         <Transition name="fade-slide">
-          <div v-if="sidebarOpen" class="sidebar__brand">
+          <div v-if="sidebarOpen || mobileOpen" class="sidebar__brand">
             <span class="sidebar__brand-name">
               {{ storeName }}
             </span>
           </div>
         </Transition>
-        <button class="sidebar__toggle" @click="sidebarOpen = !sidebarOpen" :class="{ 'is-collapsed': !sidebarOpen }" title="Toggle Sidebar">
-          <component :is="sidebarOpen ? Menu : ChevronRight" :size="18" />
+        <button class="sidebar__toggle" @click="toggleSidebar" :class="{ 'is-collapsed': !sidebarOpen && !mobileOpen }" :title="mobileOpen ? 'Tutup menu' : 'Toggle Sidebar'">
+          <component :is="mobileOpen ? X : sidebarOpen ? Menu : ChevronRight" :size="18" />
         </button>
       </div>
 
@@ -238,15 +247,15 @@ function isActive(routeName) {
             <component :is="item.icon" :size="20" />
           </span>
           <Transition name="fade-slide">
-            <span v-if="sidebarOpen" class="sidebar__nav-label">{{ item.label }}</span>
+            <span v-if="sidebarOpen || mobileOpen" class="sidebar__nav-label">{{ item.label }}</span>
           </Transition>
           <span
-            v-if="item.badge && sidebarOpen"
+            v-if="item.badge && (sidebarOpen || mobileOpen)"
             class="sidebar__nav-badge"
             :class="`sidebar__nav-badge--${item.badgeColor}`"
           >{{ item.badge }}</span>
           <!-- Tooltip saat collapsed -->
-          <span v-if="!sidebarOpen" class="sidebar__tooltip">{{ item.label }}</span>
+          <span v-if="!sidebarOpen && !mobileOpen" class="sidebar__tooltip">{{ item.label }}</span>
         </Link>
       </nav>
 
@@ -683,9 +692,9 @@ function isActive(routeName) {
   height: 32px;
   min-width: 32px;
   border-radius: 8px;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  color: #ef4444;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -693,7 +702,7 @@ function isActive(routeName) {
   transition: all 0.15s ease;
   text-decoration: none;
 }
-.sidebar__logout:hover { background: #fca5a5; color: #b91c1c; }
+.sidebar__logout:hover { background: rgba(255, 255, 255, 0.24); color: #ffffff; }
 
 /* ── Main Content ── */
 .main-content {
@@ -758,17 +767,17 @@ function isActive(routeName) {
   width: 38px;
   height: 38px;
   border-radius: 8px;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  color: #ef4444;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #f1f5f9;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .navbar__logout-btn:hover {
-  background: #fca5a5;
-  color: #b91c1c;
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
 }
 @media (max-width: 768px) {
   .navbar__logout-btn {
@@ -1003,6 +1012,27 @@ function isActive(routeName) {
 @keyframes logoutBounceOut {
   0%   { opacity: 1; transform: scale(1) translateY(0); }
   100% { opacity: 0; transform: scale(0.8) translateY(16px); }
+}
+
+/* Some mobile browsers request a desktop-width viewport even on touch devices. */
+@media (hover: none) and (pointer: coarse) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: min(260px, 86vw) !important;
+  }
+  .sidebar--mobile-open { transform: translateX(0); }
+  .mobile-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.3);
+    z-index: 49;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .main-content { margin-left: 0; }
+  .navbar__mobile-menu,
+  .navbar__logout-btn { display: flex; }
+  .navbar__user-meta { display: none; }
 }
 
 /* Global Print Styles (Shared across all pages) */

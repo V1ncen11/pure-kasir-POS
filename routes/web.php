@@ -111,7 +111,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
         // Purchases (Stok Masuk)
-        Route::resource('purchases', \App\Http\Controllers\PurchaseController::class)->only(['index', 'create', 'store', 'show']);
+        Route::resource('purchases', \App\Http\Controllers\PurchaseController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
 
         // Settings
         Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');

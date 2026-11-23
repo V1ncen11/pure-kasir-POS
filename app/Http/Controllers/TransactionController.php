@@ -19,7 +19,10 @@ class TransactionController extends Controller
         $isAdmin = $user->role === 'admin';
 
         $transactions = Transaction::with(['cashier:id,name', 'items'])
-            ->when(!$isAdmin, fn($q) => $q->whereDate('created_at', Carbon::today()))
+            ->when(!$isAdmin, fn($q) => $q
+                ->where('cashier_id', $user->id)
+                ->whereDate('created_at', Carbon::today())
+            )
             ->when($request->search, fn($q, $s) =>
                 $q->where('invoice_number', 'like', "%$s%")
             )
